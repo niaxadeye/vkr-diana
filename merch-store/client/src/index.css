@@ -119,12 +119,8 @@ button {
   cursor: pointer;
 }
 
-a {
-  text-decoration: none;
-}
-
 .input {
-  @apply h-10 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-[15px] outline-none transition focus:border-black;
+  @apply h-10 w-full rounded-xl border border-neutral-300 bg-white px-4 text-[15px] outline-none transition focus:border-black; 
 }
 
 img,

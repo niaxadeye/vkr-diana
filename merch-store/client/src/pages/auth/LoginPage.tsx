@@ -73,7 +73,7 @@ export function LoginPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             type="email"
-            className={`h-11 w-full rounded-xl border px-4 text-[14px] font-[400] outline-none transition focus:border-black ${
+            className={`h-11 w-full rounded-2xl  border px-4 text-[14px] font-[400] outline-none transition focus:border-black focus:border-2 ${
               emailError ? "border-red-500" : "border-neutral-300"
             }`}
           />
@@ -97,7 +97,7 @@ export function LoginPage() {
 
             <Link
               to="/forgot-password"
-              className="text-[13px] font-semibold text-neutral-500 underline"
+              className="text-[15px] font-[450] text-[#666666] underline"
             >
               Забыли пароль?
             </Link>
@@ -107,7 +107,7 @@ export function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             type="password"
-            className={`h-11 w-full rounded-xl border px-4 text-[14px] font-[400] outline-none transition focus:border-black ${
+            className={`h-11 w-full rounded-2xl  border px-4 text-[14px] font-[400] outline-none transition focus:border-black focus:border-2 ${
               passwordError ? "border-red-500" : "border-neutral-300"
             }`}
           />
@@ -130,33 +130,18 @@ export function LoginPage() {
 
         <motion.div layout className="my-4 flex items-center gap-3">
           <div className="h-px flex-1 bg-neutral-200" />
-          <span className="text-[13px] text-neutral-400">Или</span>
+          <span className="text-[13px] text-[#666666] text-neutral-400 font-[500]">Или</span>
           <div className="h-px flex-1 bg-neutral-200" />
         </motion.div>
 
         <motion.div layout>
           <Link
             to="/register"
-            className="block text-center text-[14px] font-semibold text-neutral-500"
+            className="block text-center text-[15px] font-[450] text-[#666666] text-neutral-500"
           >
             Зарегистрироваться
           </Link>
         </motion.div>
-
-        <motion.p
-          layout
-          className="mt-8 text-center text-[13px] leading-5 text-neutral-500"
-        >
-          Нажимая войти, вы соглашаетесь с нашими{" "}
-          <Link to="/terms" className="underline">
-            Положениями
-          </Link>{" "}
-          и{" "}
-          <Link to="/privacy" className="underline">
-            Политикой приватности
-          </Link>
-          .
-        </motion.p>
       </motion.form>
     </AuthLayout>
   );

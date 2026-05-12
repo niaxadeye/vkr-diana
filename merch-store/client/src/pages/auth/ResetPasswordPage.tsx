@@ -81,8 +81,8 @@ export function ResetPasswordPage() {
 
         <div>
           <label
-            className={`mb-2 block text-[14px] font-medium ${
-              passwordError ? "text-red-500" : "text-neutral-900"
+            className={`mb-2 block text-[16px] font-[400] leading-5 text-[#060606] ${
+              passwordError ? "text-red-500" : "text-[#060606]"
             }`}
           >
             Новый пароль
@@ -92,7 +92,7 @@ export function ResetPasswordPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             type="password"
-            className={`h-12 w-full rounded-2xl border px-4 text-[15px] outline-none transition focus:border-black ${
+            className={`h-11 w-full rounded-2xl  border px-4 text-[14px] font-[400] outline-none transition focus:border-black focus:border-2 ${
               passwordError ? "border-red-500" : "border-neutral-300"
             }`}
           />
@@ -106,8 +106,8 @@ export function ResetPasswordPage() {
 
         <div className="mt-5">
           <label
-            className={`mb-2 block text-[14px] font-medium ${
-              confirmError ? "text-red-500" : "text-neutral-900"
+            className={`mb-2 block text-[16px] font-[400] leading-5 text-[#060606] ${
+              confirmError ? "text-red-500" : "text-[#060606]"
             }`}
           >
             Повторите пароль
@@ -117,7 +117,7 @@ export function ResetPasswordPage() {
             value={passwordConfirm}
             onChange={(event) => setPasswordConfirm(event.target.value)}
             type="password"
-            className={`h-12 w-full rounded-2xl border px-4 text-[15px] outline-none transition focus:border-black ${
+            className={`h-11 w-full rounded-2xl  border px-4 text-[14px] font-[400] outline-none transition focus:border-black focus:border-2 ${
               confirmError ? "border-red-500" : "border-neutral-300"
             }`}
           />
@@ -145,7 +145,7 @@ export function ResetPasswordPage() {
 
         <Link
           to="/login"
-          className="block text-center text-[14px] font-semibold text-neutral-500"
+          className="block text-center text-[15px] font-[450] text-[#666666] text-neutral-500"
         >
           Войти
         </Link>

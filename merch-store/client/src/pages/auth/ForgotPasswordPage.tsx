@@ -59,8 +59,8 @@ export function ForgotPasswordPage() {
       >
         <div>
           <label
-            className={`mb-2 block text-[14px] font-medium ${
-              emailError ? "text-red-500" : "text-neutral-900"
+            className={`mb-2 block text-[16px] font-[400] leading-5 text-[#060606] ${
+              emailError ? "text-red-500" : "text-[#060606]"
             }`}
           >
             Email
@@ -70,7 +70,7 @@ export function ForgotPasswordPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             type="email"
-            className={`h-12 w-full rounded-2xl border px-4 text-[15px] outline-none transition focus:border-black ${
+            className={`h-11 w-full rounded-2xl  border px-4 text-[14px] font-[400] outline-none transition focus:border-black focus:border-2 ${
               emailError ? "border-red-500" : "border-neutral-300"
             }`}
           />
@@ -98,22 +98,10 @@ export function ForgotPasswordPage() {
 
         <Link
           to="/login"
-          className="block text-center text-[14px] font-semibold text-neutral-500"
+          className="block text-center text-[15px] font-[450] text-[#666666] text-neutral-500"
         >
           Войти
         </Link>
-
-        <p className="mt-8 text-center text-[13px] leading-5 text-neutral-500">
-          Нажимая войти, вы соглашаетесь с нашими{" "}
-          <Link to="/terms" className="underline">
-            Положениями
-          </Link>{" "}
-          и{" "}
-          <Link to="/privacy" className="underline">
-            Политикой приватности
-          </Link>
-          .
-        </p>
       </motion.form>
     </AuthLayout>
   );

@@ -16,6 +16,8 @@ import Warning from "@/shared/assets/icons/warning.svg?react";
 import Person from "@/shared/assets/icons/person.svg?react";
 import Mail from "@/shared/assets/icons/mail.svg?react";
 import Phone from "@/shared/assets/icons/phone.svg?react";
+import Logo from "@/shared/assets/icons/logo.svg?react";
+
 const icons = {
     "arrow-left": ArrowLeft,
     "arrow-right": ArrowRight,
@@ -33,6 +35,7 @@ const icons = {
     person: Person,
     phone : Phone,
     mail : Mail,
+    logo : Logo,
 };
 
 export type IconName = keyof typeof icons;

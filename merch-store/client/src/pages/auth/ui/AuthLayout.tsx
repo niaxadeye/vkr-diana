@@ -24,10 +24,9 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <Icon name="close" className="h-4 w-4" />
       </button>
 
-      <section className="hidden bg-[#16171a] p-10 md:block">
+      <section className="hidden bg-[#060606] px-8 py-5 md:block">
         <Link to="/" className="inline-flex items-center gap-3 text-white">
-          <img src="/logo.svg" alt="Acrylogo" className="h-7 w-7" />
-          <span className="text-[16px] font-bold">Acrylogo</span>
+          <Icon name="logo" className="h-14 w-14 text-white" />
         </Link>
       </section>
 

@@ -190,8 +190,8 @@ model Order {
   deliveryTariffCode String?
   deliveryPrice      Int              @default(0)
   deliveryCity       String
-  deliveryStreet     String
-  deliveryHouse      String
+  deliveryStreet     String?
+  deliveryHouse      String?
   deliveryApartment  String?
   deliveryEntrance   String?
   deliveryFloor      String?

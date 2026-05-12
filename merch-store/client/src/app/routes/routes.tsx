@@ -26,6 +26,8 @@ import { AdminDashboardPage } from "@/pages/admin/dashboard/AdminDashboardPage";
 import { AdminInventoryPage } from "@/pages/admin/inventory/AdminInventoryPage";
 import { CollectionPage } from "@/pages/collection/CollectionPage";
 import { ContactsPage } from "@/pages/contacts/ContactsPage";
+import { ProfileAddressCreatePage } from "@/pages/profile-address-create/ProfileAddressCreatePage";
+import { ProfileAddressEditPage } from "@/pages/profile-address-edit/ProfileAddressEditPage";
 
 export const router = createBrowserRouter([
   {
@@ -61,6 +63,14 @@ export const router = createBrowserRouter([
           {
             path: "profile",
             Component: ProfilePage,
+          },
+          {
+            path: "profile/addresses/new",
+            Component: ProfileAddressCreatePage,
+          },
+          {
+            path: "profile/addresses/:id/edit",
+            Component: ProfileAddressEditPage,
           },
           {
             path: "profile/orders/:id",

@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-    Edit2,
-    Home,
-    Plus,
-    X,
-} from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { toast } from "sonner";
 
 import { SliderArrow } from "@/shared/ui/slider-arrow/SliderArrow";
 import { Icon } from "@/shared/ui/icon/Icon";
@@ -13,26 +9,18 @@ import { getMyOrders } from "@/entities/order/api/order.api";
 import type { Order } from "@/entities/order/model/order.types";
 import { formatPrice } from "@/entities/cart/lib/formatPrice";
 import { getMediaUrl } from "@/shared/lib/getMediaUrl";
-import { Link } from "react-router";
 
 import { ChangeEmailModal } from "./ui/ChangeEmailModal";
 import { ChangePasswordModal } from "./ui/ChangePasswordModal";
 
-import { useNavigate } from "react-router";
 import { useAuthStore } from "@/features/auth/model/auth.store";
 
 import {
-    createDeliveryAddress,
     getDeliveryAddresses,
     setDefaultDeliveryAddress,
-    updateDeliveryAddress,
 } from "@/entities/delivery-address/api/deliveryAddress.api";
 import { formatDeliveryAddress } from "@/entities/delivery-address/lib/formatDeliveryAddress";
-import type {
-    DeliveryAddress,
-    DeliveryAddressFormValues,
-} from "@/entities/delivery-address/model/deliveryAddress.types";
-import { DeliveryAddressForm } from "@/entities/delivery-address/ui/DeliveryAddressForm";
+import type { DeliveryAddress } from "@/entities/delivery-address/model/deliveryAddress.types";
 
 export function ProfilePage() {
     const [emailModalOpen, setEmailModalOpen] = useState(false);
@@ -45,12 +33,7 @@ export function ProfilePage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [ordersLoading, setOrdersLoading] = useState(true);
     const [ordersError, setOrdersError] = useState<string | null>(null);
-    // const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-    const [addressFormOpen, setAddressFormOpen] = useState(false);
-    const [editingAddress, setEditingAddress] = useState<DeliveryAddress | null>(
-        null,
-    );
     const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
     const navigate = useNavigate();
@@ -78,9 +61,6 @@ export function ProfilePage() {
         }
     }
 
-    useEffect(() => {
-        loadAddresses();
-    }, []);
     async function loadOrders() {
         try {
             setOrdersLoading(true);
@@ -98,56 +78,16 @@ export function ProfilePage() {
     }
 
     useEffect(() => {
+        void loadAddresses();
         void loadOrders();
     }, []);
 
-    function handleOpenCreateForm() {
-        setEditingAddress(null);
-        setAddressFormOpen(true);
+    function handleOpenCreateAddressPage() {
+        navigate("/profile/addresses/new");
     }
 
-    function handleOpenEditForm(address: DeliveryAddress) {
-        setEditingAddress(address);
-        setAddressFormOpen(true);
-    }
-
-    function handleCloseForm() {
-        setAddressFormOpen(false);
-        setEditingAddress(null);
-    }
-
-    async function handleSubmitAddress(values: DeliveryAddressFormValues) {
-        if (editingAddress) {
-            const updatedAddress = await updateDeliveryAddress(
-                editingAddress.id,
-                values,
-            );
-
-            setAddresses((currentAddresses) =>
-                currentAddresses.map((address) =>
-                    address.id === updatedAddress.id ? updatedAddress : address,
-                ),
-            );
-        } else {
-            const createdAddress = await createDeliveryAddress(values);
-
-            setAddresses((currentAddresses) => {
-                if (createdAddress.isDefault) {
-                    return [
-                        createdAddress,
-                        ...currentAddresses.map((address) => ({
-                            ...address,
-                            isDefault: false,
-                        })),
-                    ];
-                }
-
-                return [createdAddress, ...currentAddresses];
-            });
-        }
-
-        handleCloseForm();
-        await loadAddresses();
+    function handleOpenEditAddressPage(addressId: string) {
+        navigate(`/profile/addresses/${addressId}/edit`);
     }
 
     async function handleSetDefaultAddress(addressId: string) {
@@ -162,33 +102,15 @@ export function ProfilePage() {
                     isDefault: address.id === updatedAddress.id,
                 })),
             );
+
+            toast.success("Адрес выбран по умолчанию");
         } catch (error) {
             console.error("SET_DEFAULT_DELIVERY_ADDRESS_ERROR:", error);
-            alert("Не удалось выбрать адрес по умолчанию");
+            toast.error("Не удалось выбрать адрес по умолчанию");
         } finally {
             setActionLoadingId(null);
         }
     }
-
-    // async function handleDeleteAddress(addressId: string) {
-    //     const confirmed = window.confirm("Удалить этот адрес доставки?");
-
-    //     if (!confirmed) {
-    //         return;
-    //     }
-
-    //     try {
-    //         setActionLoadingId(addressId);
-
-    //         await deleteDeliveryAddress(addressId);
-    //         await loadAddresses();
-    //     } catch (error) {
-    //         console.error("DELETE_DELIVERY_ADDRESS_ERROR:", error);
-    //         alert("Не удалось удалить адрес доставки");
-    //     } finally {
-    //         setActionLoadingId(null);
-    //     }
-    // }
 
     return (
         <>
@@ -196,7 +118,7 @@ export function ProfilePage() {
                 <div className="mx-auto max-w-[1256px]">
                     <section>
                         <div className="flex flex-wrap items-center gap-4">
-                            <h1 className="text-[36px] font-[500] leading-[44px] tracking-[-0.04em] text-[#060606] max-md:text-[24px] max-md:leading-[32px]">
+                            <h1 className="text-[36px] font-[500] leading-[44px] text-[#060606] max-md:text-[24px] max-md:leading-[32px]">
                                 Профиль
                             </h1>
 
@@ -217,7 +139,9 @@ export function ProfilePage() {
                             <div className="grid flex-1 gap-7 md:max-w-[520px] md:grid-cols-2 md:gap-10">
                                 <div className="flex items-start justify-between gap-4 md:block">
                                     <div>
-                                        <p className="text-[18px] leading-6 text-[#666666]">Email</p>
+                                        <p className="text-[18px] leading-6 text-[#666666]">
+                                            Email
+                                        </p>
 
                                         <p className="mt-1 text-[18px] font-[400] leading-6 text-[#060606]">
                                             {user?.email}
@@ -245,7 +169,9 @@ export function ProfilePage() {
 
                                 <div className="flex items-start justify-between gap-4 md:block">
                                     <div>
-                                        <p className="text-[18px] leading-6 text-[#666666]">Пароль</p>
+                                        <p className="text-[18px] leading-6 text-[#666666]">
+                                            Пароль
+                                        </p>
 
                                         <p className="mt-1 text-[18px] font-[400] leading-6 text-[#060606]">
                                             ••••••••••••
@@ -275,7 +201,7 @@ export function ProfilePage() {
                     </section>
 
                     <section className="mt-12 max-md:mt-14">
-                        <h2 className="text-[36px] font-[500] leading-[44px] tracking-[-0.04em] text-[#060606] max-md:text-[24px] max-md:leading-[32px]">
+                        <h2 className="text-[36px] font-[500] leading-[44px] text-[#060606] max-md:text-[24px] max-md:leading-[32px]">
                             Заказы
                         </h2>
 
@@ -300,69 +226,64 @@ export function ProfilePage() {
                                 </div>
                             ) : (
                                 <div>
-                                    {orders.map((order) => {
-                                        //const isPaymentWaiting = isOrderWaitingPayment(order);
-                                        //const paymentDeadline = getOrderPaymentDeadline(order);
+                                    {orders.map((order) => (
+                                        <article
+                                            key={order.id}
+                                            className="border-b border-[#e5e5e5] py-6 last:border-b-0"
+                                        >
+                                            <div className="grid gap-5 md:grid-cols-[150px_180px_100px_120px_1fr] md:items-start md:gap-6">
+                                                <div>
+                                                    <p className="text-[16px] font-medium leading-6 text-[#060606]">
+                                                        Заказ #{order.orderNumber}
+                                                    </p>
 
-                                        return (
-                                            <article
-                                                key={order.id}
-                                                className="border-b border-[#e5e5e5] py-6 last:border-b-0"
-                                            >
-                                                <div className="grid gap-5 md:grid-cols-[150px_180px_100px_120px_1fr] md:items-start md:gap-6">
-                                                    <div>
-                                                        <p className="text-[16px] font-medium leading-6 text-[#060606]">
-                                                            Заказ #{order.orderNumber}
-                                                        </p>
+                                                    <p className="mt-1 text-[16px] leading-6 text-[#666666]">
+                                                        {getOrderStatusLabel(order.status, order)}
+                                                    </p>
+                                                </div>
 
-                                                        <p className="mt-1 text-[16px] leading-6 text-[#666666]">
-                                                            {getOrderStatusLabel(order.status, order)}
-                                                        </p>
-                                                    </div>
+                                                <InfoColumn
+                                                    label="Создан"
+                                                    value={formatDateTime(order.createdAt)}
+                                                />
 
+                                                <InfoColumn
+                                                    label="Итого"
+                                                    value={formatPrice(order.total)}
+                                                />
+
+                                                {isOrderWaitingPayment(order) ? (
                                                     <InfoColumn
-                                                        label="Создан"
-                                                        value={formatDateTime(order.createdAt)}
+                                                        label="Оплатить до"
+                                                        value={getOrderPaymentDeadline(order)}
                                                     />
+                                                ) : (
+                                                    <div className="hidden md:block" />
+                                                )}
 
-                                                    <InfoColumn
-                                                        label="Итого"
-                                                        value={formatPrice(order.total)}
-                                                    />
-
-                                                    {isOrderWaitingPayment(order) ? (
-                                                        <InfoColumn
-                                                            label="Оплатить до"
-                                                            value={getOrderPaymentDeadline(order)}
-                                                        />
-                                                    ) : (
-                                                        <div className="hidden md:block" />
+                                                <div className="flex h-10 items-center justify-between gap-3 md:justify-end">
+                                                    {isOrderWaitingPayment(order) && (
+                                                        <button
+                                                            type="button"
+                                                            className="inline-flex h-10 items-center justify-center rounded-full bg-[#060606] px-6 text-[15px] font-medium text-white transition hover:bg-neutral-800"
+                                                        >
+                                                            Оплатить
+                                                        </button>
                                                     )}
 
-                                                    <div className="flex h-10 items-center justify-between gap-3 md:justify-end">
-                                                        {isOrderWaitingPayment(order) && (
-                                                            <button
-                                                                type="button"
-                                                                className="inline-flex h-10 items-center justify-center rounded-full bg-[#060606] px-6 text-[15px] font-medium text-white transition hover:bg-neutral-800"
-                                                            >
-                                                                Оплатить
-                                                            </button>
-                                                        )}
+                                                    <OrderPreviewImages order={order} />
 
-                                                        <OrderPreviewImages order={order} />
-
-                                                        <Link
-                                                            to={`/profile/orders/${order.id}`}
-                                                            aria-label={`Открыть заказ #${order.orderNumber}`}
-                                                            className="shrink-0"
-                                                        >
-                                                            <SliderArrow direction="next" />
-                                                        </Link>
-                                                    </div>
+                                                    <Link
+                                                        to={`/profile/orders/${order.id}`}
+                                                        aria-label={`Открыть заказ #${order.orderNumber}`}
+                                                        className="shrink-0"
+                                                    >
+                                                        <SliderArrow direction="next" />
+                                                    </Link>
                                                 </div>
-                                            </article>
-                                        );
-                                    })}
+                                            </div>
+                                        </article>
+                                    ))}
 
                                     {orders.length > 2 && (
                                         <div className="mt-8 flex justify-center">
@@ -381,53 +302,19 @@ export function ProfilePage() {
 
                     <section className="mt-12">
                         <div className="flex items-center gap-4">
-                            <h2 className="text-[36px] font-[500] leading-[44px] tracking-[-0.04em] text-[#060606] max-md:text-[24px] max-md:leading-[32px]">
+                            <h2 className="text-[36px] font-[500] leading-[44px] text-[#060606] max-md:text-[24px] max-md:leading-[32px]">
                                 Адреса доставки
                             </h2>
 
                             <button
-                                onClick={handleOpenCreateForm}
-                                className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200"
+                                type="button"
+                                onClick={handleOpenCreateAddressPage}
+                                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f0f0f0] text-[#060606] transition hover:bg-[#060606] hover:text-white"
+                                aria-label="Добавить адрес"
                             >
-                                <Plus size={18} />
+                                <Icon name="plus" className="h-4 w-4" />
                             </button>
                         </div>
-
-                        {addressFormOpen && (
-                            <div className="mt-8 rounded-[28px] border border-neutral-200 bg-neutral-50 p-5 md:p-7">
-                                <div className="mb-6 flex items-center justify-between gap-4">
-                                    <div>
-                                        <h3 className="text-xl font-bold tracking-[-0.03em]">
-                                            {editingAddress
-                                                ? "Редактирование адреса"
-                                                : "Новый адрес доставки"}
-                                        </h3>
-                                        <p className="mt-1 text-sm text-neutral-500">
-                                            Этот адрес будет использоваться для
-                                            курьерской доставки заказов.
-                                        </p>
-                                    </div>
-
-                                    <button
-                                        onClick={handleCloseForm}
-                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white hover:bg-neutral-100"
-                                    >
-                                        <X size={18} />
-                                    </button>
-                                </div>
-
-                                <DeliveryAddressForm
-                                    initialAddress={editingAddress}
-                                    submitLabel={
-                                        editingAddress
-                                            ? "Сохранить изменения"
-                                            : "Добавить адрес"
-                                    }
-                                    onSubmit={handleSubmitAddress}
-                                    onCancel={handleCloseForm}
-                                />
-                            </div>
-                        )}
 
                         <div className="mt-8">
                             {addressesLoading ? (
@@ -443,9 +330,9 @@ export function ProfilePage() {
                                     <p className="text-sm font-medium text-black">
                                         Адреса доставки пока не добавлены
                                     </p>
+
                                     <p className="mt-1 text-sm text-neutral-500">
-                                        Добавь первый адрес, чтобы быстрее
-                                        оформлять заказы.
+                                        Добавьте первый адрес, чтобы быстрее оформлять заказы.
                                     </p>
                                 </div>
                             ) : (
@@ -453,73 +340,79 @@ export function ProfilePage() {
                                     {addresses.map((address) => (
                                         <article
                                             key={address.id}
-                                            className="flex h-full flex-col rounded-2xl bg-neutral-50 p-7"
+                                            className="relative flex h-full flex-col rounded-2xl bg-neutral-50 p-7"
                                         >
-                                            <div className="flex items-start justify-between gap-4">
+                                            {address.isDefault && (
+                                                <span className="absolute right-5 top-5 inline-flex rounded-full bg-black px-3 py-1 text-xs font-semibold text-white">
+                                                    По умолчанию
+                                                </span>
+                                            )}
+
+                                            <div className="flex items-start justify-between gap-4 pr-28">
                                                 <div>
-                                                    <h3 className="text-lg font-bold">
+                                                    <h3 className="text-lg font-bold text-[#060606]">
                                                         {address.title}
                                                     </h3>
-
-                                                    {address.isDefault && (
-                                                        <span className="mt-2 inline-flex rounded-full bg-black px-3 py-1 text-xs font-semibold text-white">
-                                                            По умолчанию
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </div>
 
                                             <div className="mt-6 flex-1 space-y-5">
-                                                <Info
-                                                    label="Имя"
-                                                    value={address.fullName}
-                                                />
-                                                <Info
-                                                    label="Телефон"
-                                                    value={address.phone}
-                                                />
-                                                <Info
-                                                    label="Адрес доставки"
-                                                    value={formatDeliveryAddress(
-                                                        address,
-                                                    )}
-                                                />
+                                                <Info label="Имя" value={address.fullName} />
+
+                                                <Info label="Телефон" value={address.phone} />
+
                                                 <Info
                                                     label="Тип доставки"
-                                                    value="Курьер"
+                                                    value={getDeliveryTypeLabel(address)}
                                                 />
-                                                {address.courierComment && (
+
+                                                {address.deliveryType === "courier" && (
+                                                    <Info
+                                                        label="Адрес доставки"
+                                                        value={formatDeliveryAddress(address)}
+                                                    />
+                                                )}
+
+                                                {address.deliveryType === "cdek_pickup" && address.cdekPvzCode && (
+                                                    <Info
+                                                        label="Пункт выдачи"
+                                                        value={[
+                                                            address.cdekPvzName,
+                                                            address.cdekPvzAddress,
+                                                        ]
+                                                            .filter(Boolean)
+                                                            .join(", ")}
+                                                    />
+                                                )}
+
+                                                {address.deliveryType === "courier" && address.courierComment && (
                                                     <Info
                                                         label="Комментарий"
-                                                        value={
-                                                            address.courierComment
-                                                        }
+                                                        value={address.courierComment}
                                                     />
                                                 )}
                                             </div>
 
                                             <div className="mt-7 border-t border-neutral-200 pt-5">
-                                                <div className="flex flex-wrap items-center gap-5">
+                                                <div className="flex flex-col items-center gap-4 md:flex-row md:flex-wrap md:items-center md:justify-start md:gap-5">
                                                     <button
-                                                        onClick={() =>
-                                                            handleOpenEditForm(
-                                                                address,
-                                                            )
-                                                        }
-                                                        className="inline-flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-black"
+                                                        type="button"
+                                                        onClick={() => handleOpenEditAddressPage(address.id)}
+                                                        className="inline-flex items-center justify-center gap-2 text-sm font-medium text-neutral-500 transition hover:text-black"
                                                     >
-                                                        <Edit2 size={15} />
+                                                        <Icon name="edit" className="h-4 w-4" />
                                                         Редактировать
                                                     </button>
 
                                                     {!address.isDefault && (
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleSetDefaultAddress(address.id)}
                                                             disabled={actionLoadingId === address.id}
-                                                            className="inline-flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                                                            className="inline-flex items-center justify-center gap-2 text-sm font-medium text-neutral-500 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
                                                         >
-                                                            <Home size={15} />
-                                                            Выбрать по-умолчанию
+                                                            <Icon name="home" className="h-4 w-4" />
+                                                            Выбрать по умолчанию
                                                         </button>
                                                     )}
                                                 </div>
@@ -566,7 +459,6 @@ function formatDateTime(value: string) {
         minute: "2-digit",
     }).format(new Date(value));
 }
-
 
 function OrderPreviewImages({ order }: { order: Order }) {
     const previewItems = order.items.slice(0, 4);
@@ -653,6 +545,15 @@ function getOrderStatusLabel(status: Order["status"], order?: Order) {
 
     return labels[status] ?? status;
 }
+
+function getDeliveryTypeLabel(address: DeliveryAddress) {
+    if (address.deliveryType === "cdek_pickup") {
+        return "Пункт выдачи СДЭК";
+    }
+
+    return "Курьер";
+}
+
 function InfoColumn({
     label,
     value,

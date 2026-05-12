@@ -1,45 +1,65 @@
-export type DeliveryType = "courier";
+export type DeliveryType = "courier" | "cdek_pickup";
 
 export type DeliveryAddress = {
-    id: string;
-    userId: string;
+  id: string;
+  userId: string;
 
-    title: string;
-    fullName: string;
-    phone: string;
-    city: string;
+  title: string;
+  fullName: string;
+  phone: string;
 
-    deliveryType: DeliveryType;
+  city: string;
+  deliveryType: DeliveryType;
 
-    street: string;
-    house: string;
-    apartment: string | null;
-    entrance: string | null;
-    floor: string | null;
-    courierComment: string | null;
+  cdekCityCode: string | null;
+  cdekCityName: string | null;
+  cdekRegion: string | null;
+  cdekCountry: string | null;
 
-    isDefault: boolean;
+  cdekPvzCode: string | null;
+  cdekPvzName: string | null;
+  cdekPvzAddress: string | null;
+  cdekPvzWorkTime: string | null;
 
-    createdAt: string;
-    updatedAt: string;
+  street: string | null;
+  house: string | null;
+  apartment: string | null;
+  entrance: string | null;
+  floor: string | null;
+  courierComment: string | null;
+
+  isDefault: boolean;
+
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type DeliveryAddressFormValues = {
-    title: string;
-    fullName: string;
-    phone: string;
-    city: string;
+  title: string;
+  fullName: string;
+  phone: string;
 
-    deliveryType: DeliveryType;
+  city: string;
+  deliveryType: DeliveryType;
 
-    street: string;
-    house: string;
-    apartment: string;
-    entrance: string;
-    floor: string;
-    courierComment: string;
+  cdekCityCode: string;
+  cdekCityName: string;
+  cdekRegion: string;
+  cdekCountry: string;
 
-    isDefault: boolean;
+  cdekPvzCode: string;
+  cdekPvzName: string;
+  cdekPvzAddress: string;
+  cdekPvzWorkTime: string;
+
+  street: string;
+  house: string;
+  apartment: string;
+  entrance: string;
+  floor: string;
+  courierComment: string;
+
+  isDefault: boolean;
 };
 
 export type CreateDeliveryAddressPayload = DeliveryAddressFormValues;

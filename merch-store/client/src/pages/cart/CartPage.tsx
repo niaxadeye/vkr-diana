@@ -129,8 +129,8 @@ export function CartPage() {
 
         deliveryAddress: {
           city: selectedAddress.city,
-          street: selectedAddress.street,
-          house: selectedAddress.house,
+          street: selectedAddress.street ?? "",
+          house: selectedAddress.house ?? "",
           apartment: selectedAddress.apartment,
           entrance: selectedAddress.entrance,
           floor: selectedAddress.floor,

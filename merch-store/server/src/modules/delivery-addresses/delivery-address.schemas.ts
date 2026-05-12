@@ -1,78 +1,97 @@
 import { z } from "zod";
 
-export const deliveryAddressSchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .min(1, "Название адреса обязательно")
-    .max(100, "Название адреса слишком длинное"),
+export const deliveryTypeSchema = z.enum(["courier", "cdek_pickup"]);
 
-  fullName: z
-    .string()
-    .trim()
-    .min(2, "ФИО обязательно")
-    .max(150, "ФИО слишком длинное"),
+const optionalString = z
+  .string()
+  .trim()
+  .optional()
+  .nullable()
+  .transform((value) => {
+    if (!value) return undefined;
+    return value;
+  });
 
-  phone: z
-    .string()
-    .trim()
-    .min(7, "Телефон обязателен")
-    .max(30, "Телефон слишком длинный"),
+export const deliveryAddressSchema = z
+  .object({
+    title: z.string().trim().min(1, "Название адреса обязательно"),
+    fullName: z.string().trim().min(1, "ФИО обязательно"),
+    phone: z.string().trim().min(1, "Телефон обязателен"),
 
-  city: z
-    .string()
-    .trim()
-    .min(2, "Город обязателен")
-    .max(100, "Город слишком длинный"),
+    city: z.string().trim().min(1, "Город обязателен"),
+    deliveryType: deliveryTypeSchema.default("courier"),
 
-  deliveryType: z
-    .literal("courier")
-    .default("courier"),
+    cdekCityCode: optionalString,
+    cdekCityName: optionalString,
+    cdekRegion: optionalString,
+    cdekCountry: optionalString,
 
-  street: z
-    .string()
-    .trim()
-    .min(1, "Улица обязательна")
-    .max(150, "Улица слишком длинная"),
+    cdekPvzCode: optionalString,
+    cdekPvzName: optionalString,
+    cdekPvzAddress: optionalString,
+    cdekPvzWorkTime: optionalString,
 
-  house: z
-    .string()
-    .trim()
-    .min(1, "Дом обязателен")
-    .max(30, "Дом слишком длинный"),
+    street: optionalString,
+    house: optionalString,
+    apartment: optionalString,
+    entrance: optionalString,
+    floor: optionalString,
+    courierComment: optionalString,
 
-  apartment: z
-    .string()
-    .trim()
-    .max(30, "Квартира/офис слишком длинные")
-    .optional()
-    .nullable(),
+    isDefault: z.boolean().optional().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (data.deliveryType === "courier") {
+      if (!data.street) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["street"],
+          message: "Для курьерской доставки укажите улицу",
+        });
+      }
 
-  entrance: z
-    .string()
-    .trim()
-    .max(30, "Подъезд слишком длинный")
-    .optional()
-    .nullable(),
+      if (!data.house) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["house"],
+          message: "Для курьерской доставки укажите дом",
+        });
+      }
+    }
 
-  floor: z
-    .string()
-    .trim()
-    .max(30, "Этаж слишком длинный")
-    .optional()
-    .nullable(),
+    if (data.deliveryType === "cdek_pickup") {
+      if (!data.cdekCityCode) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["cdekCityCode"],
+          message: "Для доставки в ПВЗ выберите город CDEK",
+        });
+      }
 
-  courierComment: z
-    .string()
-    .trim()
-    .max(500, "Комментарий слишком длинный")
-    .optional()
-    .nullable(),
+      if (!data.cdekPvzCode) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["cdekPvzCode"],
+          message: "Выберите пункт выдачи CDEK",
+        });
+      }
 
-  isDefault: z.boolean().optional(),
-});
+      if (!data.cdekPvzAddress) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["cdekPvzAddress"],
+          message: "Адрес пункта выдачи CDEK обязателен",
+        });
+      }
+    }
+  });
 
-export const updateDeliveryAddressSchema = deliveryAddressSchema.partial();
+export const createDeliveryAddressSchema = deliveryAddressSchema;
+
+export const updateDeliveryAddressSchema = deliveryAddressSchema;
 
 export type DeliveryAddressInput = z.infer<typeof deliveryAddressSchema>;
-export type UpdateDeliveryAddressInput = z.infer<typeof updateDeliveryAddressSchema>;
+
+export type UpdateDeliveryAddressInput = z.infer<
+  typeof updateDeliveryAddressSchema
+>;

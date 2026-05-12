@@ -139,25 +139,43 @@ model ProductVariant {
 }
 
 model DeliveryAddress {
-  id             String   @id @default(cuid())
-  userId         String
-  title          String
-  fullName       String
-  phone          String
-  city           String
-  deliveryType   String   @default("courier")
-  street         String
-  house          String
+  id     String @id @default(cuid())
+  userId String
+
+  title    String
+  fullName String
+  phone    String
+
+  city         String
+  deliveryType String @default("courier")
+
+  cdekCityCode String?
+  cdekCityName String?
+  cdekRegion   String?
+  cdekCountry  String?
+
+  cdekPvzCode     String?
+  cdekPvzName     String?
+  cdekPvzAddress  String?
+  cdekPvzWorkTime String?
+
+  street         String?
+  house          String?
   apartment      String?
   entrance       String?
   floor          String?
   courierComment String?
-  isDefault      Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([cdekCityCode])
+  @@index([cdekPvzCode])
 }
 
 model Order {

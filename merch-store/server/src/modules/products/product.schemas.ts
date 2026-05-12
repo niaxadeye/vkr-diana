@@ -8,6 +8,11 @@ export const productVariantSchema = z.object({
   reservedStock: z.number().int().min(0).optional(),
   priceOverride: z.number().int().min(0).optional().nullable(),
   isActive: z.boolean().optional(),
+
+  weightGram: z.number().int().min(1).optional().nullable(),
+  lengthCm: z.number().int().min(1).optional().nullable(),
+  widthCm: z.number().int().min(1).optional().nullable(),
+  heightCm: z.number().int().min(1).optional().nullable(),
 });
 
 export const productImageSchema = z.object({
@@ -27,6 +32,12 @@ export const createProductSchema = z.object({
   status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]).default("DRAFT"),
   categoryId: z.string().optional().nullable(),
   collectionId: z.string().optional().nullable(),
+
+  weightGram: z.number().int().min(1).default(100),
+  lengthCm: z.number().int().min(1).default(10),
+  widthCm: z.number().int().min(1).default(10),
+  heightCm: z.number().int().min(1).default(3),
+
   images: z.array(productImageSchema).default([]),
   variants: z.array(productVariantSchema).default([]),
 });

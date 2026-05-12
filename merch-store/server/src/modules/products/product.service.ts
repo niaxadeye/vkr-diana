@@ -146,6 +146,12 @@ export const productService = {
             hasVariants?: boolean;
             oldPrice?: number | null;
             status?: "DRAFT" | "ACTIVE" | "ARCHIVED";
+
+            weightGram?: number;
+            lengthCm?: number;
+            widthCm?: number;
+            heightCm?: number;
+
             categoryId?: string | null;
             collectionId?: string | null;
             images?: {
@@ -161,6 +167,11 @@ export const productService = {
                 reservedStock?: number;
                 priceOverride?: number | null;
                 isActive?: boolean;
+
+                weightGram?: number | null;
+                lengthCm?: number | null;
+                widthCm?: number | null;
+                heightCm?: number | null;
             }[];
         },
     ) {
@@ -184,6 +195,11 @@ export const productService = {
                     hasVariants: data.hasVariants,
                     oldPrice: data.oldPrice,
                     status: data.status,
+
+                    weightGram: data.weightGram,
+                    lengthCm: data.lengthCm,
+                    widthCm: data.widthCm,
+                    heightCm: data.heightCm,
 
                     categoryId: data.categoryId ?? null,
                     collectionId: data.collectionId ?? null,
@@ -241,6 +257,11 @@ function normalizeUpdateVariants(data: {
         reservedStock?: number;
         priceOverride?: number | null;
         isActive?: boolean;
+
+        weightGram?: number | null;
+        lengthCm?: number | null;
+        widthCm?: number | null;
+        heightCm?: number | null;
     }[];
 }) {
     if (data.hasVariants === false) {
@@ -255,6 +276,11 @@ function normalizeUpdateVariants(data: {
                 reservedStock: firstVariant?.reservedStock ?? 0,
                 priceOverride: null,
                 isActive: true,
+
+                weightGram: firstVariant?.weightGram ?? null,
+                lengthCm: firstVariant?.lengthCm ?? null,
+                widthCm: firstVariant?.widthCm ?? null,
+                heightCm: firstVariant?.heightCm ?? null,
             },
         ];
     }
@@ -267,5 +293,10 @@ function normalizeUpdateVariants(data: {
         reservedStock: variant.reservedStock ?? 0,
         priceOverride: variant.priceOverride ?? null,
         isActive: variant.isActive ?? true,
+
+        weightGram: variant.weightGram ?? null,
+        lengthCm: variant.lengthCm ?? null,
+        widthCm: variant.widthCm ?? null,
+        heightCm: variant.heightCm ?? null,
     }));
 }

@@ -22,6 +22,12 @@ function mapProductCreateData(data: ReturnType<typeof createProductSchema.parse>
         price: data.price,
         oldPrice: data.oldPrice,
         status: data.status,
+
+        weightGram: data.weightGram,
+        lengthCm: data.lengthCm,
+        widthCm: data.widthCm,
+        heightCm: data.heightCm,
+
         category: data.categoryId
             ? {
                 connect: {
@@ -137,7 +143,14 @@ export const productController = {
                 shortDescription: data.shortDescription,
                 price: data.price,
                 oldPrice: data.oldPrice,
+                hasVariants: data.hasVariants,
                 status: data.status,
+
+                weightGram: data.weightGram,
+                lengthCm: data.lengthCm,
+                widthCm: data.widthCm,
+                heightCm: data.heightCm,
+
                 categoryId: data.categoryId,
                 collectionId: data.collectionId,
                 images: data.images,
@@ -183,7 +196,20 @@ export const productController = {
 
 function normalizeProductVariants(data: ReturnType<typeof createProductSchema.parse>) {
     if (data.hasVariants) {
-        return data.variants;
+        return data.variants.map((variant) => ({
+            size: variant.size,
+            color: variant.color ?? null,
+            sku: variant.sku,
+            stock: variant.stock,
+            reservedStock: variant.reservedStock ?? 0,
+            priceOverride: variant.priceOverride ?? null,
+            isActive: variant.isActive ?? true,
+
+            weightGram: variant.weightGram ?? null,
+            lengthCm: variant.lengthCm ?? null,
+            widthCm: variant.widthCm ?? null,
+            heightCm: variant.heightCm ?? null,
+        }));
     }
 
     const firstVariant = data.variants[0];
@@ -197,6 +223,11 @@ function normalizeProductVariants(data: ReturnType<typeof createProductSchema.pa
             reservedStock: firstVariant?.reservedStock ?? 0,
             priceOverride: null,
             isActive: true,
+
+            weightGram: firstVariant?.weightGram ?? null,
+            lengthCm: firstVariant?.lengthCm ?? null,
+            widthCm: firstVariant?.widthCm ?? null,
+            heightCm: firstVariant?.heightCm ?? null,
         },
     ];
 }

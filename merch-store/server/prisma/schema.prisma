@@ -104,6 +104,11 @@ model Product {
   images           ProductImage[]
   variants         ProductVariant[]
 
+  weightGram    Int? @default(100)
+  lengthCm      Int? @default(10)
+  widthCm       Int? @default(10)
+  heightCm      Int? @default(3)
+
   @@index([status])
   @@index([categoryId])
   @@index([collectionId])
@@ -126,6 +131,12 @@ model ProductVariant {
   productId     String
   size          String
   color         String?
+
+  weightGram    Int?
+  lengthCm      Int?
+  widthCm       Int?
+  heightCm      Int?
+
   sku           String   @unique
   stock         Int      @default(0)
   reservedStock Int      @default(0)
@@ -215,6 +226,19 @@ model Order {
   user               User?            @relation(fields: [userId], references: [id])
   items              OrderItem[]
 
+  deliveryType       String?
+  deliveryAddressId  String?
+
+  cdekCityName       String?
+  cdekPvzName        String?
+  cdekPvzAddress     String?
+  cdekPvzWorkTime    String?
+
+  deliveryWeightGram Int?
+  deliveryLengthCm   Int?
+  deliveryWidthCm    Int?
+  deliveryHeightCm   Int?
+
   @@index([userId])
   @@index([status])
   @@index([paymentStatus])
@@ -233,6 +257,12 @@ model OrderItem {
   size       String?
   color      String?
   imageUrl   String?
+  
+  weightGram Int?
+  lengthCm   Int?
+  widthCm    Int?
+  heightCm   Int?
+
   unitPrice  Int
   quantity   Int
   totalPrice Int

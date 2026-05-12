@@ -2,13 +2,16 @@
 
 set -e
 
-cd /var/www/merch-store
+PROJECT_DIR="/var/www/vkr-diana/merch-store"
+
+echo "Go to repository..."
+cd /var/www/vkr-diana
 
 echo "Pull latest code..."
 git pull origin main
 
 echo "Install and build server..."
-cd /var/www/merch-store/server
+cd "$PROJECT_DIR/server"
 npm install
 npx prisma db push
 npx prisma generate
@@ -16,7 +19,7 @@ npm run build
 pm2 restart merch-server --update-env
 
 echo "Install and build client..."
-cd /var/www/merch-store/client
+cd "$PROJECT_DIR/client"
 npm install
 npm run build
 

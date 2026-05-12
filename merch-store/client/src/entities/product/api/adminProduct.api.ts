@@ -1,0 +1,121 @@
+import { apiClient } from "@/shared/api/apiClient";
+
+export type ProductStatus = "DRAFT" | "ACTIVE" | "ARCHIVED";
+
+export type AdminProduct = {
+    id: string;
+    title: string;
+    slug: string;
+    description: string;
+    shortDescription?: string | null;
+    price: number;
+    oldPrice?: number | null;
+    status: ProductStatus;
+    hasVariants: boolean;
+    categoryId?: string | null;
+    collectionId?: string | null;
+    images: {
+        id: string;
+        url: string;
+        alt?: string | null;
+        sortOrder: number;
+    }[];
+    variants: {
+        id: string;
+        size: string;
+        color?: string | null;
+        sku: string;
+        stock: number;
+        reservedStock: number;
+        priceOverride?: number | null;
+        isActive: boolean;
+    }[];
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type ProductPayload = {
+    title: string;
+    slug: string;
+    description: string;
+    hasVariants: boolean;
+    shortDescription?: string | null;
+    price: number;
+    oldPrice?: number | null;
+    collectionId?: string | null;
+    categoryId?: string | null;
+    status: ProductStatus;
+    images: {
+        url: string;
+        alt?: string | null;
+        sortOrder?: number;
+    }[];
+    variants: {
+        size: string;
+        color?: string | null;
+        sku: string;
+        stock: number;
+        reservedStock?: number;
+        priceOverride?: number | null;
+        isActive?: boolean;
+    }[];
+};
+
+type ListResponse = {
+    success: true;
+    data: AdminProduct[];
+    meta: {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
+    };
+};
+
+type SingleResponse = {
+    success: true;
+    data: AdminProduct;
+};
+
+export async function getAdminProducts() {
+    const response = await apiClient.get<ListResponse>("/admin/products", {
+        params: {
+            limit: 100,
+        },
+    });
+
+    return response.data.data;
+}
+
+export async function createAdminProduct(payload: ProductPayload) {
+    const response = await apiClient.post<SingleResponse>(
+        "/admin/products",
+        payload,
+    );
+
+    return response.data.data;
+}
+
+export async function updateAdminProduct(id: string, payload: Partial<ProductPayload>) {
+    const response = await apiClient.patch<SingleResponse>(
+        `/admin/products/${id}`,
+        payload,
+    );
+
+    return response.data.data;
+}
+export async function getAdminProductById(id: string) {
+    const response = await apiClient.get<SingleResponse>(
+        `/admin/products/${id}`,
+    );
+
+    return response.data.data;
+}
+
+export async function deleteAdminProduct(id: string) {
+    const response = await apiClient.delete<SingleResponse>(
+        `/admin/products/${id}`,
+    );
+
+    return response.data.data;
+}

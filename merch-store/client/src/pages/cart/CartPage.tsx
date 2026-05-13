@@ -88,35 +88,6 @@ export function CartPage() {
 
   // --- Расчет доставки через CDEK API ---
   // --- Расчет доставки через CDEK API ---
-  const deliveryRequestPayload = useMemo(() => {
-    if (!selectedAddress || items.length === 0) return null;
-
-    const metrics = items.reduce(
-      (acc, item) => {
-        const weight = (item.weightGram ?? 0) * item.quantity;
-        const length = item.lengthCm ?? 0;
-        const width = item.widthCm ?? 0;
-        const height = item.heightCm ?? 0;
-        return {
-          totalWeight: acc.totalWeight + weight,
-          maxLength: Math.max(acc.maxLength, length),
-          maxWidth: Math.max(acc.maxWidth, width),
-          maxHeight: Math.max(acc.maxHeight, height),
-        };
-      },
-      { totalWeight: 0, maxLength: 0, maxWidth: 0, maxHeight: 0 }
-    );
-
-    return {
-      fromCity: "Москва",
-      toCity: selectedAddress.cdekCityCode,
-      weightGram: metrics.totalWeight,
-      lengthCm: metrics.maxLength,
-      widthCm: metrics.maxWidth,
-      heightCm: metrics.maxHeight,
-      deliveryType: selectedAddress.deliveryType, // courier | cdek_pickup
-    };
-  }, [items, selectedAddress]);
 
   async function fetchCdekPrice() {
     if (!selectedAddress || items.length === 0) return;

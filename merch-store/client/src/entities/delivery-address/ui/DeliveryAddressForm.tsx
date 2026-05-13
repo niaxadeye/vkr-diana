@@ -92,6 +92,7 @@ const inputClassName =
     "h-11 w-full rounded-2xl border border-neutral-300 px-4 text-[14px] font-[400] outline-none transition focus:border-2 focus:border-black";
 
 
+
 const animatedBlockVariants: Variants = {
     initial: {
         opacity: 0,
@@ -228,6 +229,7 @@ export function DeliveryAddressForm({
                 floor: values.floor.trim(),
                 courierComment: values.courierComment.trim(),
             });
+            window.history.back();
         } finally {
             setIsSubmitting(false);
         }

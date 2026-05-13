@@ -6,6 +6,7 @@ import type {
     CdekTokenResponse,
     CdekDeliveryOption,
     CdelReciveCalcTariff,
+    CdekPackage
 } from "./cdek.types.js";
 
 const DEFAULT_CDEK_API_URL = "https://api.cdek.ru/v2";
@@ -179,12 +180,19 @@ export const cdekService = {
         weightGram: number,
         dimensions: { length: number; width: number; height: number },
         tariff: number, // тариф для расчета
-        deliveryType: "ADDRESS" | "PVZ" // тип доставки
+        deliveryType: "ADDRESS" | "PVZ",
+        formattedPackages : CdekPackage
     ): Promise<CdelReciveCalcTariff> {
         const token = await getCdekToken();
         const apiUrl = getCdekApiUrl();
         const toCityNumber: number = Number(toCity);
         console.log(toCity);
+        var tcode = 136;
+        if(deliveryType == "ADDRESS"){
+            tcode = 137;
+        }else{
+            tcode = 136;
+        }
         const payload = {
             "from_location":
             {
@@ -196,20 +204,16 @@ export const cdekService = {
                 "code": toCityNumber
             }
             ,
-            "tariff_code": 136,
+            "tariff_code": tariff,
             "type": 1, // интернет-магазин
             "currency": 1,
             "lang": "rus",
-            "packages":
-            {
-                "weight": 1000,
-                "length": 10,
-                "width": 10,
-                "height": 10,
-            },
+            "packages": formattedPackages,
 
         };
+        console.log("!!!!payload!!!!");
         console.log(payload);
+        console.log("!!!!payload!!!!");
         const res = await fetch(`${apiUrl}/calculator/tariff`, {
             method: "POST",
             headers: {

@@ -6,3 +6,9 @@ export type CdelReciveCalcTariff = {
     }
 
 }
+export type CdekPackage = {
+    weight: number;
+    length: number;
+    width: number;
+    height: number;
+};

@@ -13,7 +13,7 @@ import type {
   DeliveryAddress,
   DeliveryAddressFormValues,
 } from "@/entities/delivery-address/model/deliveryAddress.types";
-import type { CdelReciveCalcTariff } from "@/pages/cart/cdek.type"
+import type { CdelReciveCalcTariff, CdekPackage } from "@/pages/cart/cdek.type"
 import { DeliveryAddressForm } from "@/entities/delivery-address/ui/DeliveryAddressForm";
 import { formatDeliveryAddress } from "@/entities/delivery-address/lib/formatDeliveryAddress";
 
@@ -124,6 +124,15 @@ export function CartPage() {
     try {
       setCdekLoading(true);
 
+      const formattedPackages: CdekPackage[] = items.flatMap(item =>
+        Array(item.quantity).fill({
+          weight: item.weightGram,
+          length: item.lengthCm,
+          width: item.widthCm,
+          height: item.heightCm,
+        })
+      );
+
       const payload = {
         fromCity: "Москва",
         toCity: selectedAddress.cdekCityCode,
@@ -133,26 +142,27 @@ export function CartPage() {
         heightCm: Math.max(...items.map(item => item.heightCm ?? 0)),
         tariff: selectedAddress.deliveryType === "courier" ? 136 : 137,
         deliveryType: selectedAddress.deliveryType === "courier" ? "ADDRESS" : "PVZ",
+        packages: formattedPackages
       };
 
       const response = await apiClient.post<CdelReciveCalcTariff>("/cdek/calc", payload);
       setCdekDelivery(response.data);
-      setCdekPrice(cdekDelivery?.data.total_sum ?? 0)
+      setCdekPrice(response.data.data.total_sum ?? 0); // <- сразу обновляем цену
     } catch (err) {
       console.error("CDEK_PRICE_ERROR", err);
       setCdekDelivery({ data: { total_sum: 0, calendar_min: 0, calendar_max: 0 } });
+      setCdekPrice(0); // <- при ошибке тоже обнуляем
     } finally {
       setCdekLoading(false);
     }
   }
 
-  useEffect(() => {
-    void fetchCdekPrice();
-  }, [deliveryRequestPayload]);
 
   useEffect(() => {
-    void fetchCdekPrice();
-  }, [selectedAddress]);
+    if (selectedAddress && items.length > 0) {
+      void fetchCdekPrice();
+    }
+  }, [selectedAddress, items]);
 
   // --- Оформление заказа ---
   async function handleSubmitOrder() {
@@ -175,8 +185,8 @@ export function CartPage() {
         },
         deliveryAddress: {
           city: selectedAddress.city,
-          street: selectedAddress.street ?? "",
-          house: selectedAddress.house ?? "",
+          street: selectedAddress.street ?? "none",
+          house: selectedAddress.house ?? "none",
           apartment: selectedAddress.apartment,
           entrance: selectedAddress.entrance,
           floor: selectedAddress.floor,
@@ -222,9 +232,6 @@ export function CartPage() {
     }
   }
 
-  useEffect(() => {
-    void fetchCdekPrice();
-  }, [deliveryRequestPayload]);
 
 
   // --- Рендер ---
@@ -428,7 +435,7 @@ export function CartPage() {
 
                 <button
                   type="button"
-                  onClick={() => setAddressFormOpen((v) => !v)}
+                  onClick={() => window.location.href = "/profile/addresses/new"}
                   className="inline-flex items-center gap-2 text-[15px] font-[500] text-neutral-500 transition hover:text-black"
                 >
                   <Pencil size={15} />

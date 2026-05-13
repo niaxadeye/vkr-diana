@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { fail, success } from "../../utils/api-response.js";
 import { cdekService } from "./cdek.service.js";
 
+
 export const cdekController = {
     async searchCities(req: Request, res: Response) {
         const query = String(req.query.query ?? "");
@@ -58,7 +59,8 @@ export const cdekController = {
             lengthCm,
             widthCm,
             heightCm,
-            deliveryType, // "courier" | "cdek_pickup"
+            deliveryType,
+            packages  // "courier" | "cdek_pickup"
         } = req.body;
         if (!toCity || !weightGram || !deliveryType) {
             return fail(
@@ -83,7 +85,8 @@ export const cdekController = {
                     height: Number(heightCm ?? 0),
                 },
                 tariffCode,
-                deliveryType
+                deliveryType,
+                packages
             );
 
             return success(res, options);

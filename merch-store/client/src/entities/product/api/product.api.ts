@@ -1,5 +1,17 @@
 import { apiClient } from "@/shared/api/apiClient";
 
+export type ProductAccordionItem = {
+  id: string;
+  productId: string;
+  title: string;
+  content: string;
+  sortOrder: number;
+  isActive: boolean;
+  isOpenByDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ProductListItem = {
     id: string;
     title: string;
@@ -14,6 +26,7 @@ export type ProductListItem = {
     lengthCm: number | null;
     widthCm: number | null;
     heightCm: number | null;
+    accordionItems: ProductAccordionItem[];
     images: {
         id: string;
         url: string;

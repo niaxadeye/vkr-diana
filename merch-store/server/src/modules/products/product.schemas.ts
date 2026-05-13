@@ -20,6 +20,14 @@ export const productImageSchema = z.object({
   alt: z.string().optional().nullable(),
   sortOrder: z.number().int().optional(),
 });
+export const productAccordionItemSchema = z.object({
+  title: z.string().min(1, "Название блока обязательно").max(120),
+  content: z.string().max(100_000, "Слишком большой текст блока").default(""),
+  sortOrder: z.number().int().min(0).optional(),
+  isActive: z.boolean().optional(),
+  isOpenByDefault: z.boolean().optional(),
+});
+
 
 export const createProductSchema = z.object({
   title: z.string().min(2),
@@ -39,6 +47,7 @@ export const createProductSchema = z.object({
   heightCm: z.number().int().min(1).default(3),
 
   images: z.array(productImageSchema).default([]),
+  accordionItems: z.array(productAccordionItemSchema).default([]),
   variants: z.array(productVariantSchema).default([]),
 });
 
@@ -52,3 +61,4 @@ export const productQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
+

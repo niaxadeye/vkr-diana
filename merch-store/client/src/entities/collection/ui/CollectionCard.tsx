@@ -17,7 +17,7 @@ export function CollectionCard({ collection }: CollectionCardProps) {
             to={`/collections/${collection.slug}`}
             className="group block w-full overflow-hidden"
         >
-            <div className="aspect-[3/4] h-[360px] overflow-hidden bg-neutral-100 md:h-[544px]">
+            <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100">
                 {imageUrl ? (
                     <img
                         src={imageUrl}

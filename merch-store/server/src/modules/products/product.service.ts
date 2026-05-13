@@ -32,6 +32,9 @@ export const productService = {
                     images: {
                         orderBy: { sortOrder: "asc" },
                     },
+                    accordionItems: {
+                        orderBy: { sortOrder: "asc" },
+                    },
                     variants: true,
                     category: true,
                     collection: true,
@@ -63,6 +66,9 @@ export const productService = {
                 images: {
                     orderBy: { sortOrder: "asc" },
                 },
+                accordionItems: {
+                    orderBy: { sortOrder: "asc" },
+                },
                 variants: true,
                 category: true,
                 collection: true,
@@ -88,6 +94,9 @@ export const productService = {
                 where,
                 include: {
                     images: {
+                        orderBy: { sortOrder: "asc" },
+                    },
+                    accordionItems: {
                         orderBy: { sortOrder: "asc" },
                     },
                     variants: true,
@@ -118,8 +127,15 @@ export const productService = {
         return prisma.product.create({
             data,
             include: {
-                images: true,
+                images: {
+                    orderBy: { sortOrder: "asc" },
+                },
                 variants: true,
+                accordionItems: {
+                    orderBy: { sortOrder: "asc" },
+                },
+                category: true,
+                collection: true,
             },
         });
     },
@@ -128,6 +144,9 @@ export const productService = {
             where: { id },
             include: {
                 images: { orderBy: { sortOrder: "asc" } },
+                accordionItems: {
+                    orderBy: { sortOrder: "asc" },
+                },
                 variants: true,
                 category: true,
                 collection: true,
@@ -173,6 +192,13 @@ export const productService = {
                 widthCm?: number | null;
                 heightCm?: number | null;
             }[];
+            accordionItems?: {
+                title: string;
+                content: string;
+                sortOrder?: number;
+                isActive?: boolean;
+                isOpenByDefault?: boolean;
+            }[];
         },
     ) {
         return prisma.$transaction(async (tx) => {
@@ -183,6 +209,12 @@ export const productService = {
             await tx.productVariant.deleteMany({
                 where: { productId: id },
             });
+
+            if (data.accordionItems) {
+                await tx.productAccordionItem.deleteMany({
+                    where: { productId: id },
+                });
+            }
 
             return tx.product.update({
                 where: { id },
@@ -223,6 +255,12 @@ export const productService = {
                             }),
                         }
                         : undefined,
+
+                    accordionItems: data.accordionItems
+                        ? {
+                            create: normalizeUpdateAccordionItems(data.accordionItems),
+                        }
+                        : undefined,
                 },
                 include: {
                     images: {
@@ -231,6 +269,9 @@ export const productService = {
                     variants: true,
                     category: true,
                     collection: true,
+                    accordionItems: {
+                        orderBy: { sortOrder: "asc" },
+                    },
                 },
             });
         });
@@ -299,4 +340,22 @@ function normalizeUpdateVariants(data: {
         widthCm: variant.widthCm ?? null,
         heightCm: variant.heightCm ?? null,
     }));
+}
+
+function normalizeUpdateAccordionItems(
+  items: {
+    title: string;
+    content: string;
+    sortOrder?: number;
+    isActive?: boolean;
+    isOpenByDefault?: boolean;
+  }[],
+) {
+  return items.map((item, index) => ({
+    title: item.title,
+    content: item.content,
+    sortOrder: item.sortOrder ?? index,
+    isActive: item.isActive ?? true,
+    isOpenByDefault: item.isOpenByDefault ?? false,
+  }));
 }

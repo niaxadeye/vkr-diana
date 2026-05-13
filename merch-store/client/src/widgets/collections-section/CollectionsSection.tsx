@@ -64,7 +64,14 @@ export function CollectionsSection() {
                             <div
                                 key={index}
                                 className="h-[360px] shrink-0 basis-[66.666%] animate-pulse bg-neutral-100 md:h-[544px] md:basis-[calc((100%-32px)/3)] xl:basis-[calc((100%-48px)/4)]"
-                            />
+                            >
+                                <div className="aspect-[3/4] bg-neutral-100" />
+
+                                <div className="pt-3">
+                                    <div className="h-3 w-3/4 rounded-full bg-neutral-100" />
+                                    <div className="mt-2 h-3 w-1/3 rounded-full bg-neutral-100" />
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </div>

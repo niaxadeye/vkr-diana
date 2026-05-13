@@ -103,6 +103,7 @@ model Product {
   collection       Collection?      @relation(fields: [collectionId], references: [id])
   images           ProductImage[]
   variants         ProductVariant[]
+  accordionItems ProductAccordionItem[]
 
   weightGram    Int? @default(100)
   lengthCm      Int? @default(10)
@@ -112,6 +113,23 @@ model Product {
   @@index([status])
   @@index([categoryId])
   @@index([collectionId])
+}
+model ProductAccordionItem {
+  id              String   @id @default(cuid())
+  productId       String
+  title           String
+  content         String   @db.Text
+  sortOrder       Int      @default(0)
+  isActive        Boolean  @default(true)
+  isOpenByDefault Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([isActive])
+  @@index([sortOrder])
 }
 
 model ProductImage {

@@ -66,7 +66,7 @@ export function RecommendedProductsSection() {
                         {Array.from({ length: 5 }).map((_, index) => (
                             <div
                                 key={index}
-                                className="shrink-0 basis-[66.666%] animate-pulse md:basis-[calc((100%-32px)/3)] lg:basis-[calc((100%-48px)/4)] xl:basis-[calc((100%-64px)/5)]"
+                                className="h-[360px] shrink-0 basis-[66.666%] animate-pulse bg-neutral-100 md:h-[544px] md:basis-[calc((100%-32px)/3)] xl:basis-[calc((100%-48px)/4)]"
                             >
                                 <div className="aspect-[3/4] bg-neutral-100" />
 

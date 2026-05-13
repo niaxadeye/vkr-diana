@@ -193,7 +193,7 @@ export function ProductShowcase({ product }: Props) {
                     )}
                 </div>
 
-                <div className="relative -mt-6 rounded-t-[24px] bg-white px-5 pb-10 pt-6 z-[20]">
+                <div className="relative -mt-6 rounded-t-[24px] bg-white px-5 pb-4 md:pb-10 pt-6 z-[20]">
                     <ProductFloatingCard mobile product={product} />
                 </div>
             </section>

@@ -7,6 +7,7 @@ import {
 } from "@/entities/product/api/product.api";
 import { ProductShowcase } from "./ui/ProductShowcase";
 import { RecommendedProductsSection } from "@/widgets/recommended-products-section/RecommendedProductsSection";
+import { ProductAccordionSection } from "@/pages/product/ui/ProductAccordionSection";
 
 export function ProductPage() {
   const { slug } = useParams();
@@ -73,11 +74,14 @@ export function ProductPage() {
     <main className="bg-[#fff]">
       <ProductShowcase product={product} />
 
-      <section className="mx-auto max-w-[1680px] px-4 py-14 md:px-8">
-        {/* <ProductAccordionSection /> */}
-        
+      <section className="mx-auto max-w-[1680px] px-4 py-4 md:py-14 md:px-0">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
+          <ProductAccordionSection items={product.accordionItems} />
+
+          <div aria-hidden="true" />
+        </div>
       </section>
-      <RecommendedProductsSection/>
+      <RecommendedProductsSection />
     </main>
   );
 }

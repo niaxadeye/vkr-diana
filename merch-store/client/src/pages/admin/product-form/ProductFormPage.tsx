@@ -26,6 +26,40 @@ const PRODUCT_STATUS_OPTIONS: { value: ProductStatus; label: string; description
     { value: "ARCHIVED", label: "Архив", description: "Товар скрыт и считается архивным" },
 ];
 
+function createDefaultAccordionItems(): ProductPayload["accordionItems"] {
+    return [
+        {
+            title: "О доставке",
+            content:
+                "- Стоимость доставки рассчитывается автоматически на этапе оформления заказа.\n- Средний срок доставки: 10–14 дней с момента отправки заказа.\n- После оплаты заказ будет отправлен в течение 10 рабочих дней.\n\nДоставка по России осуществляется транспортной компанией СДЭК.",
+            sortOrder: 0,
+            isActive: true,
+            isOpenByDefault: true,
+        },
+        {
+            title: "Материалы и детали",
+            content: "",
+            sortOrder: 1,
+            isActive: true,
+            isOpenByDefault: false,
+        },
+        {
+            title: "Инструкции по уходу",
+            content: "",
+            sortOrder: 2,
+            isActive: true,
+            isOpenByDefault: false,
+        },
+        {
+            title: "Размерная сетка",
+            content: "",
+            sortOrder: 3,
+            isActive: true,
+            isOpenByDefault: false,
+        },
+    ];
+}
+
 const emptyProduct: ProductPayload = {
     title: "",
     slug: "",
@@ -37,10 +71,29 @@ const emptyProduct: ProductPayload = {
     status: "DRAFT",
     categoryId: null,
     collectionId: null,
+
+    weightGram: 100,
+    lengthCm: 10,
+    widthCm: 10,
+    heightCm: 3,
+
     images: [{ url: "", alt: "", sortOrder: 0 }],
+
     variants: [
-        { size: "S", sku: "", stock: 0, reservedStock: 0, isActive: true },
+        {
+            size: "S",
+            sku: "",
+            stock: 0,
+            reservedStock: 0,
+            isActive: true,
+            weightGram: 100,
+            lengthCm: 10,
+            widthCm: 10,
+            heightCm: 3,
+        },
     ],
+
+    accordionItems: createDefaultAccordionItems(),
 };
 
 export function ProductFormPage() {
@@ -97,6 +150,15 @@ export function ProductFormPage() {
                     images: product.images.length
                         ? product.images.map(img => ({ ...img }))
                         : [{ url: "", alt: "", sortOrder: 0 }],
+                    accordionItems: product.accordionItems?.length
+                        ? product.accordionItems.map((item, index) => ({
+                            title: item.title,
+                            content: item.content,
+                            sortOrder: item.sortOrder ?? index,
+                            isActive: item.isActive,
+                            isOpenByDefault: item.isOpenByDefault,
+                        }))
+                        : createDefaultAccordionItems(),
                     variants: product.variants.length
                         ? product.variants.map(v => ({
                             ...v,
@@ -194,6 +256,54 @@ export function ProductFormPage() {
         }));
     }
 
+    function updateAccordionItem<K extends keyof ProductPayload["accordionItems"][number]>(
+        index: number,
+        key: K,
+        value: ProductPayload["accordionItems"][number][K],
+    ) {
+        setForm((prev) => {
+            if (key === "isOpenByDefault" && value === true) {
+                return {
+                    ...prev,
+                    accordionItems: prev.accordionItems.map((item, itemIndex) => ({
+                        ...item,
+                        isOpenByDefault: itemIndex === index,
+                    })),
+                };
+            }
+
+            return {
+                ...prev,
+                accordionItems: prev.accordionItems.map((item, itemIndex) =>
+                    itemIndex === index ? { ...item, [key]: value } : item,
+                ),
+            };
+        });
+    }
+
+    function addAccordionItem() {
+        setForm((prev) => ({
+            ...prev,
+            accordionItems: [
+                ...prev.accordionItems,
+                {
+                    title: "",
+                    content: "",
+                    sortOrder: prev.accordionItems.length,
+                    isActive: true,
+                    isOpenByDefault: false,
+                },
+            ],
+        }));
+    }
+
+    function removeAccordionItem(index: number) {
+        setForm((prev) => ({
+            ...prev,
+            accordionItems: prev.accordionItems.filter((_, itemIndex) => itemIndex !== index),
+        }));
+    }
+
     function validateForm() {
         if (!form.title.trim()) return "Введите название товара";
         if (!form.slug.trim()) return "Введите slug товара";
@@ -202,6 +312,13 @@ export function ProductFormPage() {
         if (form.images.some(img => !img.url.trim())) return "У всех изображений должен быть URL";
         if (form.variants.some(v => !v.size.trim() || !v.sku.trim())) return "У каждого варианта должны быть размер и SKU";
         if (form.variants.some(v => Number(v.reservedStock ?? 0) > Number(v.stock))) return "Резерв не может быть больше остатка";
+        if (
+            form.accordionItems.some(
+                (item) => item.isActive !== false && !item.title.trim(),
+            )
+        ) {
+            return "У активных блоков аккордеона должно быть название";
+        }
         return null;
     }
 
@@ -213,31 +330,59 @@ export function ProductFormPage() {
         setIsLoading(true);
         try {
             // Формируем payload с правильными габаритами
-            const payload = {
+            const payload: ProductPayload = {
                 ...form,
+
+                weightGram: form.weightGram ?? 100,
+                lengthCm: form.lengthCm ?? 10,
+                widthCm: form.widthCm ?? 10,
+                heightCm: form.heightCm ?? 3,
+
+                images: form.images.map((image, index) => ({
+                    url: image.url,
+                    alt: image.alt ?? null,
+                    sortOrder: image.sortOrder ?? index,
+                })),
+
+                accordionItems: form.accordionItems
+                    .filter((item) => item.title.trim() || item.content.trim())
+                    .map((item, index) => ({
+                        title: item.title.trim(),
+                        content: item.content,
+                        sortOrder: item.sortOrder ?? index,
+                        isActive: item.isActive ?? true,
+                        isOpenByDefault: item.isOpenByDefault ?? false,
+                    })),
+
                 variants: form.hasVariants
-                    ? form.variants.map(v => ({
-                        ...v,
-                        weightGram: v.weightGram ?? form.weightGram,
-                        lengthCm: v.dimensions?.lengthCm ?? form.lengthCm,
-                        widthCm: v.dimensions?.widthCm ?? form.widthCm,
-                        heightCm: v.dimensions?.heightCm ?? form.heightCm,
+                    ? form.variants.map((v) => ({
+                        size: v.size,
+                        color: v.color ?? null,
+                        sku: v.sku,
+                        stock: Number(v.stock),
+                        reservedStock: Number(v.reservedStock ?? 0),
+                        priceOverride: v.priceOverride ?? null,
+                        isActive: v.isActive ?? true,
+
+                        weightGram: v.weightGram ?? form.weightGram ?? 100,
+                        lengthCm: v.lengthCm ?? form.lengthCm ?? 10,
+                        widthCm: v.widthCm ?? form.widthCm ?? 10,
+                        heightCm: v.heightCm ?? form.heightCm ?? 3,
                     }))
                     : [
                         {
-                            ...form.variants[0],
                             size: "ONE_SIZE",
                             color: null,
                             sku: form.variants[0]?.sku || `${form.slug}-default`,
-                            stock: form.variants[0]?.stock ?? 0,
-                            reservedStock: form.variants[0]?.reservedStock ?? 0,
+                            stock: Number(form.variants[0]?.stock ?? 0),
+                            reservedStock: Number(form.variants[0]?.reservedStock ?? 0),
                             priceOverride: null,
                             isActive: true,
 
-                            weightGram: form.weightGram,
-                            lengthCm: form.lengthCm,
-                            widthCm: form.widthCm,
-                            heightCm: form.heightCm,
+                            weightGram: form.weightGram ?? 100,
+                            lengthCm: form.lengthCm ?? 10,
+                            widthCm: form.widthCm ?? 10,
+                            heightCm: form.heightCm ?? 3,
                         },
                     ],
             };
@@ -364,7 +509,32 @@ export function ProductFormPage() {
                             </span>
                         </button>
                     </div>
-
+                    <FormCard
+                        title="Аккордеон товара"
+                        action={
+                            <Button type="button" variant="secondary" onClick={addAccordionItem}>
+                                Добавить блок
+                            </Button>
+                        }
+                    >
+                        <div className="grid gap-4">
+                            {form.accordionItems.length === 0 ? (
+                                <div className="rounded-[24px] bg-neutral-50 p-5 text-[15px] text-neutral-500">
+                                    Информационные блоки пока не добавлены.
+                                </div>
+                            ) : (
+                                form.accordionItems.map((item, index) => (
+                                    <AccordionItemCard
+                                        key={index}
+                                        item={item}
+                                        index={index}
+                                        onChange={updateAccordionItem}
+                                        onRemove={removeAccordionItem}
+                                    />
+                                ))
+                            )}
+                        </div>
+                    </FormCard>
                     {/* Варианты */}
                     {form.hasVariants ? (
                         <section className="mt-6 rounded-3xl bg-white p-6">
@@ -589,13 +759,13 @@ function VariantCard({
                     <input type="number" min={0} value={variant.weightGram ?? 0} onChange={e => onChange(index, "weightGram", Number(e.target.value))} className="input" />
                 </Field>
                 <Field label="Длина (см)">
-                    <input type="number" min={0} value={variant.dimensions?.lengthCm ?? 0} onChange={e => onChange(index, "dimensions", Number(e.target.value))} className="input" />
+                    <input type="number" min={0} value={variant.lengthCm ?? 0} onChange={e => onChange(index, "lengthCm", Number(e.target.value))} className="input" />
                 </Field>
                 <Field label="Ширина (см)">
-                    <input type="number" min={0} value={variant.dimensions?.widthCm ?? 0} onChange={e => onChange(index, "dimensions", Number(e.target.value))} className="input" />
+                    <input type="number" min={0} value={variant.widthCm ?? 0} onChange={e => onChange(index, "widthCm", Number(e.target.value))} className="input" />
                 </Field>
                 <Field label="Высота (см)">
-                    <input type="number" min={0} value={variant.dimensions?.heightCm ?? 0} onChange={e => onChange(index, "dimensions", Number(e.target.value))} className="input" />
+                    <input type="number" min={0} value={variant.heightCm ?? 0} onChange={e => onChange(index, "heightCm", Number(e.target.value))} className="input" />
                 </Field>
             </div>
         </article>
@@ -656,4 +826,96 @@ interface VariantWithDimensions {
     lengthCm?: number | null;
     widthCm?: number | null;
     heightCm?: number | null;
+}
+
+function AccordionItemCard({
+    item,
+    index,
+    onChange,
+    onRemove,
+}: {
+    item: ProductPayload["accordionItems"][number];
+    index: number;
+    onChange: <K extends keyof ProductPayload["accordionItems"][number]>(
+        index: number,
+        key: K,
+        value: ProductPayload["accordionItems"][number][K],
+    ) => void;
+    onRemove: (index: number) => void;
+}) {
+    return (
+        <article className="rounded-[24px] bg-neutral-50 p-4">
+            <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+                <div>
+                    <h3 className="text-[17px] font-semibold text-black">
+                        Блок #{index + 1}
+                    </h3>
+
+                    <p className="mt-1 text-[13px] text-neutral-500">
+                        Контент поддерживает markdown-разметку.
+                    </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                    <label className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-[14px] font-medium text-black">
+                        <input
+                            type="checkbox"
+                            checked={item.isActive ?? true}
+                            onChange={(event) =>
+                                onChange(index, "isActive", event.target.checked)
+                            }
+                        />
+                        Активен
+                    </label>
+
+                    <label className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-[14px] font-medium text-black">
+                        <input
+                            type="checkbox"
+                            checked={item.isOpenByDefault ?? false}
+                            onChange={(event) =>
+                                onChange(index, "isOpenByDefault", event.target.checked)
+                            }
+                        />
+                        Открыт первым
+                    </label>
+
+                    <Button type="button" variant="danger" onClick={() => onRemove(index)}>
+                        Удалить
+                    </Button>
+                </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-[1fr_140px]">
+                <Field label="Название блока">
+                    <input
+                        value={item.title}
+                        onChange={(event) => onChange(index, "title", event.target.value)}
+                        className="input"
+                        placeholder="Например: О доставке"
+                    />
+                </Field>
+
+                <Field label="Порядок">
+                    <input
+                        type="number"
+                        min={0}
+                        value={item.sortOrder ?? index}
+                        onChange={(event) =>
+                            onChange(index, "sortOrder", Number(event.target.value))
+                        }
+                        className="input"
+                    />
+                </Field>
+            </div>
+
+            <Field label="Markdown-контент" className="mt-4 block">
+                <textarea
+                    value={item.content}
+                    onChange={(event) => onChange(index, "content", event.target.value)}
+                    className="input min-h-[180px] py-3 font-mono text-[14px]"
+                    placeholder={"Например:\n\n- Первый пункт\n- Второй пункт\n\n**Важный текст**"}
+                />
+            </Field>
+        </article>
+    );
 }

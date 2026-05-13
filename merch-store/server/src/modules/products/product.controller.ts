@@ -47,6 +47,9 @@ function mapProductCreateData(data: ReturnType<typeof createProductSchema.parse>
         },
         variants: {
             create: normalizeProductVariants(data),
+        }, 
+        accordionItems: {
+            create: normalizeProductAccordionItems(data.accordionItems),
         },
     };
 }
@@ -155,6 +158,8 @@ export const productController = {
                 collectionId: data.collectionId,
                 images: data.images,
                 variants: data.variants,
+
+                accordionItems: data.accordionItems,
             });
 
             return success(res, product);
@@ -230,4 +235,22 @@ function normalizeProductVariants(data: ReturnType<typeof createProductSchema.pa
             heightCm: firstVariant?.heightCm ?? null,
         },
     ];
+}
+
+function normalizeProductAccordionItems(
+  items: {
+    title: string;
+    content: string;
+    sortOrder?: number;
+    isActive?: boolean;
+    isOpenByDefault?: boolean;
+  }[],
+) {
+  return items.map((item, index) => ({
+    title: item.title,
+    content: item.content,
+    sortOrder: item.sortOrder ?? index,
+    isActive: item.isActive ?? true,
+    isOpenByDefault: item.isOpenByDefault ?? false,
+  }));
 }

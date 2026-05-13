@@ -8,6 +8,26 @@ export type Dimensions = {
     heightCm: number;
 };
 
+export type AdminProductAccordionItem = {
+    id: string;
+    productId: string;
+    title: string;
+    content: string;
+    sortOrder: number;
+    isActive: boolean;
+    isOpenByDefault: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type ProductAccordionItemPayload = {
+    title: string;
+    content: string;
+    sortOrder?: number;
+    isActive?: boolean;
+    isOpenByDefault?: boolean;
+};
+
 export type AdminProduct = {
     id: string;
     title: string;
@@ -44,6 +64,7 @@ export type AdminProduct = {
         widthCm?: number | null;
         heightCm?: number | null;
     }[];
+    accordionItems: AdminProductAccordionItem[];
     createdAt: string;
     updatedAt: string;
 };
@@ -60,7 +81,9 @@ export type ProductPayload = {
     categoryId?: string | null;
     status: ProductStatus;
     weightGram?: number | null;
-    dimensions?: Dimensions | null;
+    lengthCm?: number | null;
+        widthCm?: number | null;
+        heightCm?: number | null;
     images: {
         url: string;
         alt?: string | null;
@@ -75,8 +98,11 @@ export type ProductPayload = {
         priceOverride?: number | null;
         isActive?: boolean;
         weightGram?: number | null;
-        dimensions?: Dimensions | null;
+        lengthCm?: number | null;
+        widthCm?: number | null;
+        heightCm?: number | null;
     }[];
+    accordionItems: ProductAccordionItemPayload[];
 };
 
 type ListResponse = {

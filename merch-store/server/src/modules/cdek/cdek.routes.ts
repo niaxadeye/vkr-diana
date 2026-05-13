@@ -6,3 +6,4 @@ export const cdekRouter = Router();
 
 cdekRouter.get("/cities", cdekController.searchCities);
 cdekRouter.get("/offices", cdekController.getOffices);
+cdekRouter.post("/calc", cdekController.calculateDelivery);

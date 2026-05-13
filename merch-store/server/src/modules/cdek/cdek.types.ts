@@ -51,3 +51,19 @@ export type CdekOfficeApiItem = {
     number?: string;
   }>;
 };
+
+export type CdekDeliveryOption = {
+    type: "ADDRESS" | "PVZ"; // Тип доставки
+    name: string;            // Название тарифа или ПВЗ
+    price: number;           // Цена доставки в рублях
+    termMin: number | null;  // Минимальный срок доставки в днях
+    termMax: number | null;  // Максимальный срок доставки в днях
+    address?: string;        // Полный адрес, если PVZ
+    code?: string;           // Код PVZ или тарифа
+};
+
+export type CdelReciveCalcTariff = {
+    total_sum: number;
+    calendar_min: number;
+    calendar_max: number;
+}

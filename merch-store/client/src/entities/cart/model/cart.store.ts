@@ -64,13 +64,18 @@ export const useCartStore = create<CartState>()(
                             items: state.items.map((item) =>
                                 item.id === itemId
                                     ? {
-                                          ...item,
-                                          price: payload.price,
-                                          oldPrice: payload.oldPrice ?? null,
-                                          maxQuantity,
-                                          quantity: clampedQuantity,
-                                          imageUrl: payload.imageUrl ?? item.imageUrl,
-                                      }
+                                        ...item,
+                                        price: payload.price,
+                                        oldPrice: payload.oldPrice ?? null,
+                                        maxQuantity,
+                                        quantity: clampedQuantity,
+                                        imageUrl: payload.imageUrl ?? item.imageUrl,
+                                        // Обновляем размеры и вес
+                                        weightGram: payload.weightGram,
+                                        lengthCm: payload.lengthCm,
+                                        widthCm: payload.widthCm,
+                                        heightCm: payload.heightCm,
+                                    }
                                     : item,
                             ),
                         };
@@ -89,6 +94,10 @@ export const useCartStore = create<CartState>()(
                         quantity: clampQuantity(quantityToAdd, maxQuantity),
                         maxQuantity,
                         imageUrl: payload.imageUrl ?? null,
+                        weightGram: payload.weightGram,
+                        lengthCm: payload.lengthCm,
+                        widthCm: payload.widthCm,
+                        heightCm: payload.heightCm,
                     };
 
                     wasAdded = true;
@@ -140,12 +149,12 @@ export const useCartStore = create<CartState>()(
                     items: state.items.map((cartItem) =>
                         cartItem.id === id
                             ? {
-                                  ...cartItem,
-                                  quantity: Math.min(
-                                      cartItem.quantity + 1,
-                                      cartItem.maxQuantity,
-                                  ),
-                              }
+                                ...cartItem,
+                                quantity: Math.min(
+                                    cartItem.quantity + 1,
+                                    cartItem.maxQuantity,
+                                ),
+                            }
                             : cartItem,
                     ),
                 }));
@@ -157,9 +166,9 @@ export const useCartStore = create<CartState>()(
                         .map((item) =>
                             item.id === id
                                 ? {
-                                      ...item,
-                                      quantity: item.quantity - 1,
-                                  }
+                                    ...item,
+                                    quantity: item.quantity - 1,
+                                }
                                 : item,
                         )
                         .filter((item) => item.quantity > 0),
@@ -184,12 +193,12 @@ export const useCartStore = create<CartState>()(
                     items: state.items.map((cartItem) =>
                         cartItem.id === id
                             ? {
-                                  ...cartItem,
-                                  quantity: clampQuantity(
-                                      quantity,
-                                      cartItem.maxQuantity,
-                                  ),
-                              }
+                                ...cartItem,
+                                quantity: clampQuantity(
+                                    quantity,
+                                    cartItem.maxQuantity,
+                                ),
+                            }
                             : cartItem,
                     ),
                 }));

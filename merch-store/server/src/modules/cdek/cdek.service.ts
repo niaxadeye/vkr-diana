@@ -4,6 +4,8 @@ import type {
     CdekOfficeApiItem,
     CdekOfficeOption,
     CdekTokenResponse,
+    CdekDeliveryOption,
+    CdelReciveCalcTariff,
 } from "./cdek.types.js";
 
 const DEFAULT_CDEK_API_URL = "https://api.cdek.ru/v2";
@@ -169,4 +171,69 @@ export const cdekService = {
 
         return offices.map(mapOffice);
     },
+
+
+    async calculateDelivery(
+        fromCity: string,
+        toCity: string,
+        weightGram: number,
+        dimensions: { length: number; width: number; height: number },
+        tariff: number, // тариф для расчета
+        deliveryType: "ADDRESS" | "PVZ" // тип доставки
+    ): Promise<CdelReciveCalcTariff> {
+        const token = await getCdekToken();
+        const apiUrl = getCdekApiUrl();
+        const toCityNumber: number = Number(toCity);
+        console.log(toCity);
+        const payload = {
+            "from_location":
+            {
+                "code": 44
+            }
+            ,
+            "to_location":
+            {
+                "code": toCityNumber
+            }
+            ,
+            "tariff_code": 136,
+            "type": 1, // интернет-магазин
+            "currency": 1,
+            "lang": "rus",
+            "packages":
+            {
+                "weight": 1000,
+                "length": 10,
+                "width": 10,
+                "height": 10,
+            },
+
+        };
+        console.log(payload);
+        const res = await fetch(`${apiUrl}/calculator/tariff`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`CDEK_CALC_ERROR: ${res.status} ${text}`);
+        }
+
+        const data = await res.json();
+        console.log(data);
+        // Возвращаем минимально нужное для фронта
+        // Берём первый тариф из ответа (или всё, если нужно массив)
+
+        return {
+            total_sum: data?.total_sum ?? 0,
+            calendar_min: data?.calendar_min ?? null,
+            calendar_max: data?.calendar_max ?? null,
+        };
+    }
 };

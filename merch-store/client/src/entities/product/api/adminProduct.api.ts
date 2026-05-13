@@ -2,6 +2,12 @@ import { apiClient } from "@/shared/api/apiClient";
 
 export type ProductStatus = "DRAFT" | "ACTIVE" | "ARCHIVED";
 
+export type Dimensions = {
+    lengthCm: number;
+    widthCm: number;
+    heightCm: number;
+};
+
 export type AdminProduct = {
     id: string;
     title: string;
@@ -14,6 +20,10 @@ export type AdminProduct = {
     hasVariants: boolean;
     categoryId?: string | null;
     collectionId?: string | null;
+    weightGram?: number | null; // Вес товара в граммах
+    lengthCm?: number | null;
+    widthCm?: number | null;
+    heightCm?: number | null;
     images: {
         id: string;
         url: string;
@@ -29,6 +39,10 @@ export type AdminProduct = {
         reservedStock: number;
         priceOverride?: number | null;
         isActive: boolean;
+        weightGram?: number | null;
+        lengthCm?: number | null;
+        widthCm?: number | null;
+        heightCm?: number | null;
     }[];
     createdAt: string;
     updatedAt: string;
@@ -45,6 +59,8 @@ export type ProductPayload = {
     collectionId?: string | null;
     categoryId?: string | null;
     status: ProductStatus;
+    weightGram?: number | null;
+    dimensions?: Dimensions | null;
     images: {
         url: string;
         alt?: string | null;
@@ -58,6 +74,8 @@ export type ProductPayload = {
         reservedStock?: number;
         priceOverride?: number | null;
         isActive?: boolean;
+        weightGram?: number | null;
+        dimensions?: Dimensions | null;
     }[];
 };
 
@@ -104,6 +122,7 @@ export async function updateAdminProduct(id: string, payload: Partial<ProductPay
 
     return response.data.data;
 }
+
 export async function getAdminProductById(id: string) {
     const response = await apiClient.get<SingleResponse>(
         `/admin/products/${id}`,

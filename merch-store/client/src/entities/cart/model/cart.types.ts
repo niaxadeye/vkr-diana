@@ -11,6 +11,12 @@ export type CartItem = {
     quantity: number;
     maxQuantity: number;
     imageUrl: string | null;
+
+    // Новые поля для расчёта доставки
+    weightGram: number; // вес в граммах
+    lengthCm: number;   // длина в см
+    widthCm: number;    // ширина в см
+    heightCm: number;   // высота в см
 };
 
 export type AddToCartPayload = {
@@ -25,4 +31,10 @@ export type AddToCartPayload = {
     quantity?: number;
     maxQuantity: number;
     imageUrl?: string | null;
+
+    // Прокидываем размеры и вес
+    weightGram: number;
+    lengthCm: number;
+    widthCm: number;
+    heightCm: number;
 };

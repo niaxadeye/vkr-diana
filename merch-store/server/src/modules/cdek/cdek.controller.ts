@@ -50,4 +50,51 @@ export const cdekController = {
             );
         }
     },
+    async calculateDelivery(req: Request, res: Response) {
+        const {
+            fromCity,
+            toCity,
+            weightGram,
+            lengthCm,
+            widthCm,
+            heightCm,
+            deliveryType, // "courier" | "cdek_pickup"
+        } = req.body;
+        if (!toCity || !weightGram || !deliveryType) {
+            return fail(
+                res,
+                400,
+                "CDEK_DELIVERY_PARAMS_MISSING",
+                "Не переданы параметры доставки",
+            );
+        }
+
+        // Выбираем тариф CDEK в зависимости от типа доставки
+        const tariffCode = deliveryType === "courier" ? 136 : 137;
+
+        try {
+            const options = await cdekService.calculateDelivery(
+                fromCity ?? "Москва",
+                toCity,
+                Number(weightGram),
+                {
+                    length: Number(lengthCm ?? 0),
+                    width: Number(widthCm ?? 0),
+                    height: Number(heightCm ?? 0),
+                },
+                tariffCode,
+                deliveryType
+            );
+
+            return success(res, options);
+        } catch (error) {
+            console.error("CDEK_CALCULATE_ERROR:", error);
+            return fail(
+                res,
+                500,
+                "CDEK_CALCULATE_ERROR",
+                "Не удалось рассчитать доставку CDEK",
+            );
+        }
+    },
 };

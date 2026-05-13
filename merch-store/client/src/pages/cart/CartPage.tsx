@@ -1,26 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { AlertTriangle, ChevronDown, Pencil } from "lucide-react";
+import { ChevronDown, Pencil } from "lucide-react";
 
 import { useCartStore } from "@/entities/cart/model/cart.store";
 import { formatPrice } from "@/entities/cart/lib/formatPrice";
-
+import type { DeliveryType } from "@/entities/delivery-address/model/deliveryAddress.types";
 import {
   createDeliveryAddress,
   getDeliveryAddresses,
 } from "@/entities/delivery-address/api/deliveryAddress.api";
-import { formatDeliveryAddress } from "@/entities/delivery-address/lib/formatDeliveryAddress";
 import type {
   DeliveryAddress,
   DeliveryAddressFormValues,
 } from "@/entities/delivery-address/model/deliveryAddress.types";
+import type { CdelReciveCalcTariff } from "@/pages/cart/cdek.type"
 import { DeliveryAddressForm } from "@/entities/delivery-address/ui/DeliveryAddressForm";
+import { formatDeliveryAddress } from "@/entities/delivery-address/lib/formatDeliveryAddress";
 
 import { createOrder } from "@/entities/order/api/order.api";
 import { useAuthStore } from "@/features/auth/model/auth.store";
 import { Icon } from "@/shared/ui/icon/Icon";
-
-const DELIVERY_PRICE = 0;
+import { apiClient } from "@/shared/api/apiClient";
 
 export function CartPage() {
   const items = useCartStore((state) => state.items);
@@ -32,9 +32,7 @@ export function CartPage() {
   const user = useAuthStore((state) => state.user);
 
   const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
-    null,
-  );
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [addressDropdownOpen, setAddressDropdownOpen] = useState(false);
   const [addressFormOpen, setAddressFormOpen] = useState(false);
@@ -42,44 +40,34 @@ export function CartPage() {
   const [promoCode, setPromoCode] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
-  const [createdOrderNumber, setCreatedOrderNumber] = useState<number | null>(
-    null,
-  );
+  const [createdOrderNumber, setCreatedOrderNumber] = useState<number | null>(null);
+
+  const [cdekPrice, setCdekPrice] = useState<number | null>(null);
+
+  const [cdekDelivery, setCdekDelivery] = useState<CdelReciveCalcTariff | null>(null);
+  const [cdekLoading, setCdekLoading] = useState(false);
 
   const subtotal = useMemo(
-    () =>
-      items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0,
-      ),
-    [items],
+    () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [items]
   );
 
-  const total = subtotal + DELIVERY_PRICE;
-
   const selectedAddress =
-    addresses.find((address) => address.id === selectedAddressId) ?? null;
+    addresses.find((a) => a.id === selectedAddressId) ?? null;
 
-  const hasItemsWithoutVariant = items.some((item) => !item.variantId);
+  const total = subtotal + (cdekPrice ?? 0);
 
+  // --- Загрузка адресов ---
   async function loadAddresses() {
-    if (!user) {
-      return;
-    }
-
+    if (!user) return;
     try {
       setAddressesLoading(true);
-
       const result = await getDeliveryAddresses();
-
       setAddresses(result);
-
-      const defaultAddress =
-        result.find((address) => address.isDefault) ?? result[0] ?? null;
-
+      const defaultAddress = result.find((a) => a.isDefault) ?? result[0] ?? null;
       setSelectedAddressId(defaultAddress?.id ?? null);
-    } catch (error) {
-      console.error("LOAD_CHECKOUT_ADDRESSES_ERROR:", error);
+    } catch (err) {
+      console.error("LOAD_CHECKOUT_ADDRESSES_ERROR:", err);
     } finally {
       setAddressesLoading(false);
     }
@@ -91,26 +79,83 @@ export function CartPage() {
 
   async function handleCreateAddress(values: DeliveryAddressFormValues) {
     const address = await createDeliveryAddress(values);
-
-    setAddresses((currentAddresses) => [address, ...currentAddresses]);
+    setAddresses((curr) => [address, ...curr]);
     setSelectedAddressId(address.id);
     setAddressFormOpen(false);
     setAddressDropdownOpen(false);
-
     await loadAddresses();
   }
 
+  // --- Расчет доставки через CDEK API ---
+  // --- Расчет доставки через CDEK API ---
+  const deliveryRequestPayload = useMemo(() => {
+    if (!selectedAddress || items.length === 0) return null;
+
+    const metrics = items.reduce(
+      (acc, item) => {
+        const weight = (item.weightGram ?? 0) * item.quantity;
+        const length = item.lengthCm ?? 0;
+        const width = item.widthCm ?? 0;
+        const height = item.heightCm ?? 0;
+        return {
+          totalWeight: acc.totalWeight + weight,
+          maxLength: Math.max(acc.maxLength, length),
+          maxWidth: Math.max(acc.maxWidth, width),
+          maxHeight: Math.max(acc.maxHeight, height),
+        };
+      },
+      { totalWeight: 0, maxLength: 0, maxWidth: 0, maxHeight: 0 }
+    );
+
+    return {
+      fromCity: "Москва",
+      toCity: selectedAddress.cdekCityCode,
+      weightGram: metrics.totalWeight,
+      lengthCm: metrics.maxLength,
+      widthCm: metrics.maxWidth,
+      heightCm: metrics.maxHeight,
+      deliveryType: selectedAddress.deliveryType, // courier | cdek_pickup
+    };
+  }, [items, selectedAddress]);
+
+  async function fetchCdekPrice() {
+    if (!selectedAddress || items.length === 0) return;
+
+    try {
+      setCdekLoading(true);
+
+      const payload = {
+        fromCity: "Москва",
+        toCity: selectedAddress.cdekCityCode,
+        weightGram: items.reduce((sum, item) => sum + (item.weightGram ?? 0) * item.quantity, 0),
+        lengthCm: Math.max(...items.map(item => item.lengthCm ?? 0)),
+        widthCm: Math.max(...items.map(item => item.widthCm ?? 0)),
+        heightCm: Math.max(...items.map(item => item.heightCm ?? 0)),
+        tariff: selectedAddress.deliveryType === "courier" ? 136 : 137,
+        deliveryType: selectedAddress.deliveryType === "courier" ? "ADDRESS" : "PVZ",
+      };
+
+      const response = await apiClient.post<CdelReciveCalcTariff>("/cdek/calc", payload);
+      setCdekDelivery(response.data);
+      setCdekPrice(cdekDelivery?.data.total_sum ?? 0)
+    } catch (err) {
+      console.error("CDEK_PRICE_ERROR", err);
+      setCdekDelivery({ data: { total_sum: 0, calendar_min: 0, calendar_max: 0 } });
+    } finally {
+      setCdekLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void fetchCdekPrice();
+  }, [deliveryRequestPayload]);
+
+  useEffect(() => {
+    void fetchCdekPrice();
+  }, [selectedAddress]);
+
+  // --- Оформление заказа ---
   async function handleSubmitOrder() {
-    if (items.length === 0) {
-      setOrderError("Корзина пустая");
-      return;
-    }
-
-    if (hasItemsWithoutVariant) {
-      setOrderError("У одного из товаров не выбран вариант");
-      return;
-    }
-
     if (!selectedAddress) {
       setOrderError("Выберите адрес доставки");
       return;
@@ -120,13 +165,14 @@ export function CartPage() {
       setIsSubmittingOrder(true);
       setOrderError(null);
 
+      const deliveryMethod = mapDeliveryTypeToMethod(selectedAddress.deliveryType);
+
       const order = await createOrder({
         customer: {
           fullName: selectedAddress.fullName,
           phone: selectedAddress.phone,
           email: user?.email ?? null,
         },
-
         deliveryAddress: {
           city: selectedAddress.city,
           street: selectedAddress.street ?? "",
@@ -136,55 +182,73 @@ export function CartPage() {
           floor: selectedAddress.floor,
           courierComment: selectedAddress.courierComment,
         },
-
         delivery: {
-          provider: "CUSTOM",
-          method: "COURIER",
-          price: DELIVERY_PRICE,
+          provider: "CDEK",
+          method: deliveryMethod,
+          price: cdekPrice ?? 0,
+          tariffCode: "", // при необходимости
+          cdekCityCode: selectedAddress.cdekCityCode,
+          cdekPvzCode: selectedAddress.cdekPvzCode,
         },
-
         items: items.map((item) => ({
           productId: item.productId,
           variantId: item.variantId as string,
           quantity: item.quantity,
         })),
-
         promoCode: promoCode.trim() || null,
       });
 
       clearCart();
       setCreatedOrderNumber(order.orderNumber);
-    } catch (error) {
-      console.error("CREATE_ORDER_ERROR:", error);
+    } catch (err) {
+      console.error("CREATE_ORDER_ERROR", err);
       setOrderError("Не удалось оформить заказ. Проверьте данные и наличие товаров.");
     } finally {
       setIsSubmittingOrder(false);
     }
   }
+
+  // --- Утилита маппинга ---
+  function mapDeliveryTypeToMethod(
+    deliveryType: DeliveryType
+  ): "COURIER" | "PICKUP_POINT" {
+    switch (deliveryType) {
+      case "courier":
+        return "COURIER";
+      case "cdek_pickup":
+        return "PICKUP_POINT";
+      default:
+        return "COURIER";
+    }
+  }
+
+  useEffect(() => {
+    void fetchCdekPrice();
+  }, [deliveryRequestPayload]);
+
+
+  // --- Рендер ---
   if (!user) {
     return (
       <main className="min-h-screen bg-white px-4 py-10 md:px-8">
         <div className="mx-auto max-w-[760px] rounded-[28px] bg-neutral-50 p-8 text-center">
-          <h1 className="text-[32px] font-semibold tracking-[-0.05em] text-black">
+          <h1 className="text-[32px] font-semibold text-black">
             Войдите, чтобы оформить заказ
           </h1>
-
-          <p className="mt-4 text-[16px] leading-7 text-neutral-500">
-            Корзина сохранится на этом устройстве, но оформить заказ
-            можно только после входа в аккаунт.
+          <p className="mt-4 text-[16px] text-neutral-500">
+            Корзина сохранится на этом устройстве, но оформить заказ можно только
+            после входа в аккаунт.
           </p>
-
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row justify-center">
             <Link
               to="/login"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-black px-7 text-[15px] font-medium text-white transition hover:bg-neutral-800"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-black px-7 text-white"
             >
               Войти
             </Link>
-
             <Link
               to="/catalog"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-[15px] font-medium text-black ring-1 ring-neutral-200 transition hover:ring-black"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-black ring-1 ring-neutral-200"
             >
               Вернуться в каталог
             </Link>
@@ -193,24 +257,21 @@ export function CartPage() {
       </main>
     );
   }
+
   if (createdOrderNumber) {
     return (
       <main className="min-h-screen bg-white px-4 py-10 md:px-8">
         <div className="mx-auto max-w-[760px] rounded-[28px] bg-neutral-50 p-8 text-center">
-          <h1 className="text-[32px] font-semibold tracking-[-0.05em] text-black">
-            Заказ оформлен
-          </h1>
-
+          <h1 className="text-[32px] font-semibold text-black">Заказ оформлен</h1>
           <p className="mt-4 text-[16px] text-neutral-500">
             Номер заказа:{" "}
             <span className="font-semibold text-black">
               #{createdOrderNumber}
             </span>
           </p>
-
           <Link
             to="/catalog"
-            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-black px-7 text-[15px] font-medium text-white transition hover:bg-neutral-800"
+            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-black text-white"
           >
             Вернуться в каталог
           </Link>
@@ -222,20 +283,16 @@ export function CartPage() {
   return (
     <main className="min-h-screen bg-white px-4 py-4 md:px-8 md:py-12">
       <div className="mx-auto max-w-[1256px]">
-        <h1 className="text-[24px] font-[500] md:text-[36px]">
-          Оформление заказа
-        </h1>
+        <h1 className="text-[24px] font-[500] md:text-[36px]">Оформление заказа</h1>
 
         {items.length === 0 ? (
           <div className="mt-10 rounded-[28px] bg-neutral-50 p-8">
             <h2 className="text-[22px] font-semibold tracking-[-0.04em]">
               Корзина пустая
             </h2>
-
             <p className="mt-2 text-[15px] text-neutral-500">
               Добавьте товары в корзину, чтобы оформить заказ.
             </p>
-
             <Link
               to="/catalog"
               className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-black px-6 text-[15px] font-medium text-white transition hover:bg-neutral-800"
@@ -286,20 +343,17 @@ export function CartPage() {
                               {item.title}
                             </h2>
                           </Link>
-
                           {(item.size || item.color) && (
                             <p className="mt-2 text-[15px] font-[400] uppercase text-[#666666]">
                               {[item.size, item.color].filter(Boolean).join(" / ")}
                             </p>
                           )}
-
                           <div className="mt-2 flex items-center gap-2">
                             {hasOldPrice ? (
                               <>
                                 <span className="rounded-full bg-[#060606] px-2 py-0.5 text-[14px] font-[600] leading-5 text-white">
                                   {formatPrice(item.price)}
                                 </span>
-
                                 <span className="text-[14px] font-[400] text-[#666666] line-through">
                                   {formatPrice(item.oldPrice!)}
                                 </span>
@@ -353,30 +407,28 @@ export function CartPage() {
                 })}
               </div>
 
-              <div className="mt-6 space-y-4 font-[400] text-[16px]">
-                <SummaryRow
-                  label="Сумма"
-                  value={formatPrice(subtotal)}
-                />
-                <SummaryRow
-                  label="Итого"
-                  value={formatPrice(total)}
-                  strong
-                />
-              </div>
+              <SummaryRow
+                label="Сумма"
+                value={formatPrice(subtotal)}
+              />
+              <SummaryRow
+                label="Доставка"
+                value={cdekLoading ? "Считаем..." : formatPrice(cdekDelivery?.data.total_sum ?? 0)}
+              />
+              <SummaryRow
+                label="Итого"
+                value={formatPrice(subtotal + (cdekPrice ?? 0))}
+                strong
+              />
             </section>
 
             <aside className="lg:pt-1">
               <div className="flex items-center justify-between">
-                <h2 className="text-[15px] font-[400]">
-                  Доставить в
-                </h2>
+                <h2 className="text-[15px] font-[400]">Доставить в</h2>
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setAddressFormOpen((value) => !value)
-                  }
+                  onClick={() => setAddressFormOpen((v) => !v)}
                   className="inline-flex items-center gap-2 text-[15px] font-[500] text-neutral-500 transition hover:text-black"
                 >
                   <Pencil size={15} />
@@ -392,34 +444,23 @@ export function CartPage() {
                 <div className="relative mt-3">
                   <button
                     type="button"
-                    onClick={() =>
-                      setAddressDropdownOpen(
-                        (value) => !value,
-                      )
-                    }
+                    onClick={() => setAddressDropdownOpen((v) => !v)}
                     className="flex min-h-[64px] w-full items-center justify-between gap-4 rounded-[16px] border border-neutral-300 bg-white px-4 py-3 text-left transition hover:border-black"
                   >
                     <div className="min-w-0">
                       <p className="truncate text-[15px] font-medium text-black">
-                        {selectedAddress?.title ??
-                          "Выберите адрес"}
+                        {selectedAddress?.title ?? "Выберите адрес"}
                       </p>
-
                       {selectedAddress && (
                         <p className="mt-1 line-clamp-1 text-[14px] text-neutral-500">
-                          {formatDeliveryAddress(
-                            selectedAddress,
-                          )}
+                          {formatDeliveryAddress(selectedAddress)}
                         </p>
                       )}
                     </div>
 
                     <ChevronDown
                       size={18}
-                      className={`shrink-0 transition ${addressDropdownOpen
-                        ? "rotate-180"
-                        : ""
-                        }`}
+                      className={`shrink-0 transition ${addressDropdownOpen ? "rotate-180" : ""}`}
                     />
                   </button>
 
@@ -430,22 +471,13 @@ export function CartPage() {
                           key={address.id}
                           type="button"
                           onClick={() => {
-                            setSelectedAddressId(
-                              address.id,
-                            );
-                            setAddressDropdownOpen(
-                              false,
-                            );
+                            setSelectedAddressId(address.id);
                           }}
                           className="block w-full border-b border-neutral-100 px-4 py-3 text-left last:border-b-0 hover:bg-neutral-50"
                         >
-                          <p className="text-[15px] font-medium text-black">
-                            {address.title}
-                          </p>
+                          <p className="text-[15px] font-medium text-black">{address.title}</p>
                           <p className="mt-1 text-[14px] leading-5 text-neutral-500">
-                            {formatDeliveryAddress(
-                              address,
-                            )}
+                            {formatDeliveryAddress(address)}
                           </p>
                         </button>
                       ))}
@@ -454,12 +486,9 @@ export function CartPage() {
                 </div>
               ) : (
                 <div className="mt-3 rounded-[16px] border border-neutral-200 bg-neutral-50 px-4 py-4">
-                  <p className="text-[14px] font-medium text-black">
-                    Адрес доставки не выбран
-                  </p>
+                  <p className="text-[14px] font-medium text-black">Адрес доставки не выбран</p>
                   <p className="mt-1 text-[14px] text-neutral-500">
-                    Добавьте адрес, чтобы продолжить
-                    оформление.
+                    Добавьте адрес, чтобы продолжить оформление.
                   </p>
                 </div>
               )}
@@ -469,28 +498,20 @@ export function CartPage() {
                   <DeliveryAddressForm
                     submitLabel="Добавить адрес"
                     onSubmit={handleCreateAddress}
-                    onCancel={() =>
-                      setAddressFormOpen(false)
-                    }
+                    onCancel={() => setAddressFormOpen(false)}
                   />
                 </div>
               )}
 
-              <div className="mt-7">
-                <label className="text-[15px] font-[400] text-black">
-                  Промокод
-                </label>
-
+              <div className="mt-6">
+                <label className="text-[15px] font-[400] text-black">Промокод</label>
                 <div className="mt-3 flex h-[48px] rounded-[16px] border border-neutral-300 p-1">
                   <input
                     value={promoCode}
-                    onChange={(event) =>
-                      setPromoCode(event.target.value)
-                    }
+                    onChange={(e) => setPromoCode(e.target.value)}
                     placeholder="Введите промокод"
                     className="min-w-0 flex-1 bg-transparent px-3 text-[14px] font-[400] outline-none placeholder:text-neutral-400"
                   />
-
                   <button
                     type="button"
                     className="rounded-[12px] bg-neutral-100 px-5 text-[15px] font-[500] text-black transition hover:bg-neutral-200"
@@ -500,47 +521,14 @@ export function CartPage() {
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center justify-between">
-                <label className="inline-flex items-center gap-3 text-[15px] text-black">
-                  <span className="h-5 w-5 rounded-full border border-neutral-300" />
-                  Посылка склад-склад
-                </label>
-
-                <span className="text-[15px] font-semibold">
-                  +402₽
-                </span>
-              </div>
-
-              <div className="mt-5 flex gap-4 rounded-[18px] bg-neutral-50 px-5 py-4">
-                <AlertTriangle
-                  size={24}
-                  className="mt-1 shrink-0 text-black"
-                />
-
-                <div>
-                  <p className="text-[15px] font-semibold text-black">
-                    Обратите внимание!
-                  </p>
-                  <p className="mt-1 text-[14px] text-neutral-500">
-                    Вы не выбрали способ доставки
-                  </p>
-                </div>
-              </div>
-
               {orderError && (
-                <div className="mt-4 rounded-[16px] bg-red-50 px-4 py-3 text-[14px] text-red-600">
-                  {orderError}
-                </div>
+                <div className="mt-4 rounded-[16px] bg-red-50 px-4 py-3 text-[14px] text-red-600">{orderError}</div>
               )}
 
               <button
                 type="button"
                 onClick={handleSubmitOrder}
-                disabled={
-                  isSubmittingOrder ||
-                  !selectedAddress ||
-                  items.length === 0
-                }
+                disabled={isSubmittingOrder || !selectedAddress || items.length === 0}
                 className="mt-6 h-14 w-full rounded-full bg-black text-[15px] font-[500] text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-400"
               >
                 {isSubmittingOrder
@@ -567,9 +555,7 @@ function SummaryRow({
   return (
     <div className="flex items-center justify-between text-[16px]">
       <span className="text-neutral-500">{label}</span>
-      <span className={strong ? "font-semibold text-black" : "text-black"}>
-        {value}
-      </span>
+      <span className={strong ? "font-semibold text-black" : "text-black"}>{value}</span>
     </div>
   );
 }

@@ -10,6 +10,10 @@ export type ProductListItem = {
     oldPrice?: number | null;
     status: "DRAFT" | "ACTIVE" | "ARCHIVED";
     hasVariants: boolean;
+    weightGram: number | null; // Вес товара в граммах
+    lengthCm: number | null;
+    widthCm: number | null;
+    heightCm: number | null;
     images: {
         id: string;
         url: string;
@@ -25,6 +29,10 @@ export type ProductListItem = {
         reservedStock: number;
         priceOverride?: number | null;
         isActive: boolean;
+        weightGram?: number | null;
+        lengthCm?: number | null;
+        widthCm?: number | null;
+        heightCm?: number | null;
     }[];
     collection?: {
         id: string;

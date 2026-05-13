@@ -100,6 +100,11 @@ export function ProductFloatingCard({ product, mobile = false }: Props) {
             imageUrl: productImageUrl,
             quantity: 1,
             maxQuantity: selectedVariantAvailableStock,
+            // новые поля для расчёта доставки
+            weightGram: Number(selectedVariant?.weightGram ?? product.weightGram ?? 0),
+            lengthCm: Number(selectedVariant?.lengthCm ?? product.lengthCm ?? 0),
+            widthCm: Number(selectedVariant?.widthCm ?? product.widthCm ?? 0),
+            heightCm: Number(selectedVariant?.heightCm ?? product.heightCm ?? 0),
         });
 
         setAddedMessageVisible(true);
@@ -123,8 +128,8 @@ export function ProductFloatingCard({ product, mobile = false }: Props) {
                         disabled={isDisabled}
                         onClick={() => setSelectedVariantId(variant.id)}
                         className={`h-10 rounded-full text-[15px] font-medium transition ${isActive
-                                ? "bg-[#060606] text-white"
-                                : "bg-[#f0f0f0] text-[#060606] hover:bg-[#060606] hover:text-white"
+                            ? "bg-[#060606] text-white"
+                            : "bg-[#f0f0f0] text-[#060606] hover:bg-[#060606] hover:text-white"
                             } ${isDisabled ? "cursor-not-allowed opacity-40" : ""}`}
                     >
                         {variant.size}

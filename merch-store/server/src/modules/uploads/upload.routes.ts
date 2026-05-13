@@ -3,7 +3,10 @@ import { Router } from "express";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { roleMiddleware } from "../../middleware/role.middleware";
 import { uploadController } from "./upload.controller";
-import { createUploadMiddleware } from "../../middleware/upload.middleware";
+import {
+  createHomeHeroUploadMiddleware,
+  createUploadMiddleware,
+} from "../../middleware/upload.middleware";
 
 export const uploadRouter = Router();
 
@@ -21,4 +24,12 @@ uploadRouter.post(
   roleMiddleware(["ADMIN", "MANAGER"]),
   createUploadMiddleware("collections").single("file"),
   uploadController.uploadCollectionImage,
+);
+
+uploadRouter.post(
+  "/admin/uploads/home-hero-media",
+  authMiddleware,
+  roleMiddleware(["ADMIN", "MANAGER"]),
+  createHomeHeroUploadMiddleware().single("file"),
+  uploadController.uploadHomeHeroMedia,
 );

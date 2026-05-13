@@ -5,5 +5,17 @@ export function getMediaUrl(url?: string | null) {
     return url;
   }
 
+  if (url.startsWith("/uploads/")) {
+    const apiUrl = import.meta.env.VITE_API_URL;
+
+    if (!apiUrl) {
+      return url;
+    }
+
+    const backendOrigin = apiUrl.replace(/\/api\/?$/, "");
+
+    return `${backendOrigin}${url}`;
+  }
+
   return url;
 }

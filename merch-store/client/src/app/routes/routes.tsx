@@ -29,6 +29,7 @@ import { ContactsPage } from "@/pages/contacts/ContactsPage";
 import { ProfileAddressCreatePage } from "@/pages/profile-address-create/ProfileAddressCreatePage";
 import { ProfileAddressEditPage } from "@/pages/profile-address-edit/ProfileAddressEditPage";
 import { InformationPage } from "@/pages/information/InformationPage";
+import { AdminHomePage } from "@/pages/admin/home/AdminHomePage";
 
 export const router = createBrowserRouter([
   {
@@ -125,6 +126,10 @@ export const router = createBrowserRouter([
       {
         path: "inventory",
         Component: AdminInventoryPage,
+      },
+      {
+        path: "home",
+        Component: AdminHomePage,
       },
     ],
   },

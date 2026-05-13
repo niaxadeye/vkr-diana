@@ -1,13 +1,22 @@
-export type HeroBanner = {
+export type HomeHeroBanner = {
   id: string;
+  key: string;
+
   title: string;
-  subtitle?: string;
+
   imageDesktop: string;
   imageMobile: string;
-  videoDesktop?: string;
-  videoMobile?: string;
+
+  videoDesktop?: string | null;
+  videoMobile?: string | null;
+
   ctaLabel: string;
   ctaHref: string;
+
+  isActive: boolean;
+
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CollectionPreview = {

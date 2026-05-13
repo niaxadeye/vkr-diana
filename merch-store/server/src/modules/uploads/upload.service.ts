@@ -2,10 +2,10 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-export type UploadFolder = "products" | "collections";
+export type UploadFolder = "products" | "collections"| "home" ;
 
 export function ensureUploadFolders() {
-  const folders: UploadFolder[] = ["products", "collections"];
+  const folders: UploadFolder[] = ["products", "collections", "home"];
 
   folders.forEach((folder) => {
     const dir = path.resolve(process.cwd(), "uploads", folder);

@@ -343,3 +343,22 @@ model InformationPage {
   @@index([isActive])
   @@index([sortOrder])
 }
+
+model HomeHeroBanner {
+  id           String   @id @default(cuid())
+  key          String   @unique @default("home")
+
+  title        String
+  imageDesktop String
+  imageMobile  String
+  videoDesktop String?
+  videoMobile  String?
+
+  ctaLabel     String
+  ctaHref      String
+
+  isActive     Boolean  @default(true)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

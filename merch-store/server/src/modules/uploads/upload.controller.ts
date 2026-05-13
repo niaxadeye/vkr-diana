@@ -27,4 +27,7 @@ export const uploadController = {
   uploadCollectionImage(req: Request, res: Response) {
     return handleUpload(req, res, "collections");
   },
+  uploadHomeHeroMedia(req: Request, res: Response) {
+    return handleUpload(req, res, "home");
+  },
 };

@@ -13,6 +13,15 @@ const allowedMimeTypes = [
   "image/svg+xml",
 ];
 
+const allowedHomeHeroMimeTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+  "video/webm",
+  "video/mp4",
+];
+
 function createStorage(folder: UploadFolder) {
   return multer.diskStorage({
     destination: (_req, _file, cb) => {
@@ -37,12 +46,35 @@ function fileFilter(
   cb(null, true);
 }
 
+function homeHeroFileFilter(
+  _req: Express.Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback,
+) {
+  if (!allowedHomeHeroMimeTypes.includes(file.mimetype)) {
+    cb(new Error("INVALID_HOME_HERO_FILE_TYPE"));
+    return;
+  }
+
+  cb(null, true);
+}
+
 export function createUploadMiddleware(folder: UploadFolder) {
   return multer({
     storage: createStorage(folder),
     fileFilter,
     limits: {
       fileSize: 5 * 1024 * 1024,
+    },
+  });
+}
+
+export function createHomeHeroUploadMiddleware() {
+  return multer({
+    storage: createStorage("home"),
+    fileFilter: homeHeroFileFilter,
+    limits: {
+      fileSize: 80 * 1024 * 1024,
     },
   });
 }

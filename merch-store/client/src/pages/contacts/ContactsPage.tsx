@@ -2,8 +2,8 @@ import { toast } from "sonner";
 
 import { Icon } from "@/shared/ui/icon/Icon";
 
-const CONTACT_EMAIL = "shop@example.com";
-const CONTACT_PHONE = "+7 999 999 99 99";
+const CONTACT_EMAIL = "shop@acrylogo.ru";
+const CONTACT_PHONE = "+7 985 009 10 10";
 
 function normalizePhoneForTel(phone: string) {
     return phone.replace(/[^\d+]/g, "");
@@ -42,7 +42,7 @@ export function ContactsPage() {
                 >
                     <Icon
                         name="mail"
-                        className="h-9 w-9 text-[#060606] transition-transform duration-300 group-hover:scale-105"
+                        className="h-12 w-12 text-[#060606] transition-transform duration-300 group-hover:scale-105"
                     />
 
                     <h1 className="mt-6 text-[24px] font-[500] leading-[32px] tracking-[-0.04em] text-[#060606] md:text-[28px] md:leading-[36px]">
@@ -62,7 +62,7 @@ export function ContactsPage() {
                 >
                     <Icon
                         name="phone"
-                        className="h-9 w-9 text-[#060606] transition-transform duration-300 group-hover:scale-105"
+                        className="h-12 w-12 text-[#060606] transition-transform duration-300 group-hover:scale-105"
                     />
 
                     <h2 className="mt-6 text-[28px] font-[500] leading-[36px] tracking-[-0.04em] text-[#060606]">
@@ -79,7 +79,7 @@ export function ContactsPage() {
                     href={`tel:${normalizePhoneForTel(CONTACT_PHONE)}`}
                     className="group flex min-h-[360px] flex-col items-center justify-center bg-[#fafafa] px-6 text-center transition-colors active:bg-[#f0f0f0] md:hidden"
                 >
-                    <Icon name="phone" className="h-9 w-9 text-[#060606]" />
+                    <Icon name="phone" className="h-12 w-12 text-[#060606]" />
 
                     <h2 className="mt-6 text-[24px] font-[500] leading-[32px] tracking-[-0.04em] text-[#060606]">
                         Телефон

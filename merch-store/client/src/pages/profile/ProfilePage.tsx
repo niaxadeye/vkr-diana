@@ -300,7 +300,7 @@ export function ProfilePage() {
                         </div>
                     </section>
 
-                    <section className="mt-12">
+                    <section className="mt-12 mb-12">
                         <div className="flex items-center gap-4">
                             <h2 className="text-[36px] font-[500] leading-[44px] text-[#060606] max-md:text-[24px] max-md:leading-[32px]">
                                 Адреса доставки

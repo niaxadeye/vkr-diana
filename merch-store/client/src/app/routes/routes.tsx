@@ -28,6 +28,7 @@ import { CollectionPage } from "@/pages/collection/CollectionPage";
 import { ContactsPage } from "@/pages/contacts/ContactsPage";
 import { ProfileAddressCreatePage } from "@/pages/profile-address-create/ProfileAddressCreatePage";
 import { ProfileAddressEditPage } from "@/pages/profile-address-edit/ProfileAddressEditPage";
+import { InformationPage } from "@/pages/information/InformationPage";
 
 export const router = createBrowserRouter([
   {
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
       { path: "collections/:slug", Component: CollectionPage },
       { path: "cart", Component: CartPage },
       { path: "contacts", Component: ContactsPage },
+      { path: "information", Component: InformationPage },
 
       {
         Component: ProtectedRoute,

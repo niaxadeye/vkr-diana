@@ -12,9 +12,8 @@ import { useAuthStore } from "@/features/auth/model/auth.store";
 const navItems = [
   { label: "Главная", href: "/" },
   { label: "Все товары", href: "/catalog" },
-  { label: "Lookbook", href: "/lookbook" },
+  { label: "Информация", href: "/information" },
   { label: "Контакты", href: "/contacts" },
-  { label: "Команда", href: "/team" },
 ];
 
 export function Header() {

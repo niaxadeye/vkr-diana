@@ -15,6 +15,7 @@ import { collectionRouter } from "./modules/collections/collection.routes.js";
 import { deliveryAddressRouter } from "./modules/delivery-addresses/delivery-address.routes.js";
 import { orderRouter } from "./modules/orders/order.routes.js";
 import { cdekRouter } from "./modules/cdek/cdek.routes.js";
+import { informationRouter } from "./modules/information/information.routes";
 
 export const app = express();
 ensureUploadFolders();
@@ -59,3 +60,4 @@ app.use("/api", uploadRouter);
 app.use("/api/delivery-addresses", deliveryAddressRouter);
 app.use("/api", orderRouter);
 app.use("/api/cdek", cdekRouter);
+app.use("/api", informationRouter);

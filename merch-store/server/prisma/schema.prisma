@@ -311,3 +311,17 @@ enum DeliveryMethod {
   COURIER
   PICKUP_POINT
 }
+
+model InformationPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String   @db.Text
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+}

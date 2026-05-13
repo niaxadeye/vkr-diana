@@ -15,7 +15,7 @@ const deliveryTypes: Array<{
   },
   {
     value: "cdek_pickup",
-    label: "Пункт выдачи СДЭК",
+    label: "ПВЗ СДЭК",
   },
 ];
 

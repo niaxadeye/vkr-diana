@@ -137,7 +137,7 @@ export function Header() {
       {isMobileMenuMounted && (
         <div
           className={cn(
-            "fixed inset-0 z-[60] bg-white transition duration-250 ease-out md:hidden",
+            "fixed inset-0 z-[60] bg-white min-h-[100dvh] transition duration-250 ease-out md:hidden",
             isMobileMenuOpen
               ? "pointer-events-auto opacity-100"
               : "pointer-events-none opacity-0",

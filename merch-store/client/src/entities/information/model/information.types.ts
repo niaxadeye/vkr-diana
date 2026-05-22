@@ -1,17 +1,6 @@
-export const INFORMATION_SLUGS = [
-  "payment",
-  "delivery",
-  "return",
-  "security",
-  "privacy",
-  "terms",
-] as const;
-
-export type InformationSlug = (typeof INFORMATION_SLUGS)[number];
-
 export type InformationPage = {
   id: string;
-  slug: InformationSlug;
+  slug: string;
   title: string;
   content: string;
   sortOrder: number;
@@ -19,9 +8,3 @@ export type InformationPage = {
   createdAt: string;
   updatedAt: string;
 };
-
-export function isInformationSlug(value: string | null): value is InformationSlug {
-  if (!value) return false;
-
-  return INFORMATION_SLUGS.includes(value as InformationSlug);
-}

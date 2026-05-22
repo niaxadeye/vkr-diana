@@ -30,6 +30,7 @@ import { ProfileAddressCreatePage } from "@/pages/profile-address-create/Profile
 import { ProfileAddressEditPage } from "@/pages/profile-address-edit/ProfileAddressEditPage";
 import { InformationPage } from "@/pages/information/InformationPage";
 import { AdminHomePage } from "@/pages/admin/home/AdminHomePage";
+import { InformationAdminPage } from "@/pages/admin/information/InformationAdminPage";
 
 export const router = createBrowserRouter([
   {
@@ -130,6 +131,10 @@ export const router = createBrowserRouter([
       {
         path: "home",
         Component: AdminHomePage,
+      },
+      {
+        path: "info",
+        Component: InformationAdminPage,
       },
     ],
   },

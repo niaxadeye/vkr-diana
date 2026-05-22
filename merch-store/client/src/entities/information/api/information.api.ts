@@ -1,7 +1,6 @@
 import { apiClient } from "@/shared/api/apiClient";
 import type {
-  InformationPage,
-  InformationSlug,
+  InformationPage
 } from "@/entities/information/model/information.types";
 
 type InformationListResponse = {
@@ -20,7 +19,7 @@ export async function getInformationPages() {
   return response.data.data;
 }
 
-export async function getInformationPageBySlug(slug: InformationSlug) {
+export async function getInformationPageBySlug(slug: string) {
   const response = await apiClient.get<InformationSingleResponse>(
     `/information/${slug}`,
   );

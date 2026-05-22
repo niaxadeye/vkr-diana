@@ -19,16 +19,22 @@ body {
   font-size: 36px;
   font-weight: 500;
   line-height: 44px;
-  letter-spacing: -0.04em;
   font-variation-settings: normal;
   color: var(--color-black);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE и Edge */
+  scrollbar-width: none;     /* Firefox */
 }
 
 .h3 {
   font-size: 18px;
   font-weight: 500;
   line-height: 24px;
-  letter-spacing: -0.02em;
   font-variation-settings: normal;
   color: var(--color-black);
 }
@@ -172,7 +178,6 @@ svg {
   font-size: 36px;
   line-height: 44px;
   font-weight: 600;
-  letter-spacing: -0.04em;
 }
 
 .markdown-content h2 {
@@ -180,7 +185,6 @@ svg {
   font-size: 28px;
   line-height: 36px;
   font-weight: 600;
-  letter-spacing: -0.035em;
 }
 
 .markdown-content h3 {
@@ -188,7 +192,6 @@ svg {
   font-size: 22px;
   line-height: 30px;
   font-weight: 600;
-  letter-spacing: -0.03em;
 }
 
 .markdown-content p {

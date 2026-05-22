@@ -11,6 +11,7 @@ const adminNav = [
   { label: "Заказы", href: "/admin/orders" },
   { label: "Коллекции", href: "/admin/collections" },
   { label: "Главная", href: "/admin/home" },
+  { label: "Информация", href: "/admin/info" },
 ];
 
 export function AdminLayout() {

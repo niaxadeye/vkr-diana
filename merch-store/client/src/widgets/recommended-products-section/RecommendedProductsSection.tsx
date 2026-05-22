@@ -4,11 +4,11 @@ import { FreeMode, Mousewheel, Navigation } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
 import {
-    getProducts,
     type ProductListItem,
 } from "@/entities/product/api/product.api";
 import { ProductCard } from "@/entities/product/ui/ProductCard";
 import { SliderArrow } from "@/shared/ui/slider-arrow/SliderArrow";
+import { getRecommendedProducts } from "@/entities/recommended-product/api/recommended-product.api";
 
 import "swiper/css";
 import "swiper/css/free-mode";
@@ -20,22 +20,18 @@ export function RecommendedProductsSection() {
     const [isLoading, setIsLoading] = useState(true);
 
     async function loadProducts() {
-        setIsLoading(true);
+    setIsLoading(true);
 
-        try {
-            const response = await getProducts({
-                page: 1,
-                limit: 10,
-            });
-
-            setProducts(response.data);
-        } catch (error) {
-            console.error("LOAD_RECOMMENDED_PRODUCTS_ERROR:", error);
-            setProducts([]);
-        } finally {
-            setIsLoading(false);
-        }
+    try {
+        const data = await getRecommendedProducts();
+        setProducts(data);
+    } catch (error) {
+        console.error("LOAD_RECOMMENDED_PRODUCTS_ERROR:", error);
+        setProducts([]);
+    } finally {
+        setIsLoading(false);
     }
+}
 
     useEffect(() => {
         void loadProducts();

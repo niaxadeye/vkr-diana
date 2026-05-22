@@ -104,6 +104,7 @@ model Product {
   images           ProductImage[]
   variants         ProductVariant[]
   accordionItems ProductAccordionItem[]
+  recommendedProducts RecommendedProduct[]
 
   weightGram    Int? @default(100)
   lengthCm      Int? @default(10)
@@ -361,4 +362,19 @@ model HomeHeroBanner {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model RecommendedProduct {
+  id        String   @id @default(cuid())
+  productId String  @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@index([isActive])
 }

@@ -31,6 +31,7 @@ import { ProfileAddressEditPage } from "@/pages/profile-address-edit/ProfileAddr
 import { InformationPage } from "@/pages/information/InformationPage";
 import { AdminHomePage } from "@/pages/admin/home/AdminHomePage";
 import { InformationAdminPage } from "@/pages/admin/information/InformationAdminPage";
+import { AdminRecommendedProductsPage } from "@/pages/admin/recommended-product/AdminRecommendedProductsPage";
 
 export const router = createBrowserRouter([
   {
@@ -136,6 +137,10 @@ export const router = createBrowserRouter([
         path: "info",
         Component: InformationAdminPage,
       },
+      {
+        path: "/recommended-products",
+        Component: AdminRecommendedProductsPage,
+      }
     ],
   },
   {

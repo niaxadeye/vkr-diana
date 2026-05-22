@@ -138,7 +138,7 @@ export const router = createBrowserRouter([
         Component: InformationAdminPage,
       },
       {
-        path: "/recommended-products",
+        path: "recommended-products",
         Component: AdminRecommendedProductsPage,
       }
     ],

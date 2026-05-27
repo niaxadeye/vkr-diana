@@ -285,7 +285,7 @@ export function ProfilePage() {
                                         </article>
                                     ))}
 
-                                    {orders.length > 2 && (
+                                    {orders.length > 3 && (
                                         <div className="mt-8 flex justify-center">
                                             <button
                                                 type="button"
@@ -487,7 +487,7 @@ function OrderPreviewImages({ order }: { order: Order }) {
                             src={getMediaUrl(item.imageUrl)}
                             alt={item.title}
                             loading="lazy"
-                            className="h-[34px] w-[34px] object-contain"
+                            className="object-contain"
                         />
                     ) : (
                         <Icon name="cart-filled" className="h-5 w-5" />

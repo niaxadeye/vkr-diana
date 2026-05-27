@@ -226,7 +226,7 @@ export function CartPage() {
             </Link>
             <Link
               to="/catalog"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-black ring-1 ring-neutral-200"
+              className="inline-flex h-12 min-w-[220px] items-center justify-center bg-[#060606] px-7 text-[15px] font-medium text-white transition hover:bg-[#222222] active:translate-y-[1px]"
             >
               Вернуться в каталог
             </Link>

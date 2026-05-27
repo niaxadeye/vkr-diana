@@ -93,7 +93,7 @@ export function Header() {
             <img
               src="/logo.svg"
               alt="Logo"
-              className="h-7 w-7 object-contain md:h-10 md:w-10"
+              className="h-7 w-7 object-contain h-10 md:h-10 md:w-0 lg:w-0 lg:h-10 lg:w-10"
             />
           </Link>
 

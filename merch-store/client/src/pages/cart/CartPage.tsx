@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown, Pencil } from "lucide-react";
-import { useNavigate } from "react-router";
 
 import { useCartStore } from "@/entities/cart/model/cart.store";
 import { formatPrice } from "@/entities/cart/lib/formatPrice";
@@ -30,7 +29,6 @@ export function CartPage() {
   const removeItem = useCartStore((state) => state.removeItem);
   const clearCart = useCartStore((state) => state.clearCart);
 
-  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
   const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
@@ -226,13 +224,12 @@ export function CartPage() {
             >
               Войти
             </Link>
-            <button
-              type="button"
-              onClick={() => navigate("/catalog")}
-              className="inline-flex h-12 min-w-[220px] items-center justify-center bg-[#060606] px-7 text-[14px] font-medium text-white transition hover:bg-[#222222] active:translate-y-[1px]"
+            <Link
+              to="/catalog"
+              className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-[#060606] px-6 text-[15px] font-medium text-white transition-colors hover:bg-neutral-800"
             >
-              Вернуться в каталог
-            </button>
+              Перейти в каталог
+            </Link>
           </div>
         </div>
       </main>
@@ -250,13 +247,12 @@ export function CartPage() {
               #{createdOrderNumber}
             </span>
           </p>
-          <button
-            type="button"
-            onClick={() => navigate("/catalog")}
-            className="inline-flex h-12 min-w-[220px] items-center justify-center bg-[#060606] px-7 text-[14px] font-medium text-white transition hover:bg-[#222222] active:translate-y-[1px]"
-          >
-            Вернуться в каталог
-          </button>
+          <Link
+              to="/catalog"
+              className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-[#060606] px-6 text-[15px] font-medium text-white transition-colors hover:bg-neutral-800"
+            >
+              Перейти в каталог
+            </Link>
         </div>
       </main>
     );
@@ -277,7 +273,7 @@ export function CartPage() {
             </p>
             <Link
               to="/catalog"
-              className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-black px-6 text-[15px] font-medium text-white transition hover:bg-neutral-800"
+              className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-[#060606] px-6 text-[15px] font-medium text-white transition-colors hover:bg-neutral-800"
             >
               Перейти в каталог
             </Link>

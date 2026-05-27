@@ -73,14 +73,14 @@ export function ProductPage() {
   return (
     <main className="bg-[#fff]">
       <ProductShowcase product={product} />
-
-      <section className="mx-auto max-w-[1680px] px-4 py-4 md:py-14 md:px-0">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
+      <section className="bg-white px-4 pb-16 pt-8 md:pb-20 md:pt-8">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-1 lg:grid-cols-2 mx-auto max-w-[1680px]">
           <ProductAccordionSection items={product.accordionItems} />
 
           <div aria-hidden="true" />
         </div>
       </section>
+
       <RecommendedProductsSection />
     </main>
   );

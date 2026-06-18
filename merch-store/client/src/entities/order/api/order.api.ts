@@ -116,3 +116,15 @@ export async function updateAdminOrderPaymentStatus(
 
     return response.data.data;
 }
+
+export async function updateAdminOrderTracking(
+    id: string,
+    payload: { trackingNumber: string },
+) {
+    const response = await apiClient.patch<ApiResponse<Order>>(
+        `/admin/orders/${id}/tracking`,
+        payload,
+    );
+
+    return response.data.data;
+}

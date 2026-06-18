@@ -34,6 +34,13 @@ orderRouter.patch(
     orderController.updatePaymentStatus,
 );
 
+orderRouter.patch(
+    "/admin/orders/:id/tracking",
+    authMiddleware,
+    roleMiddleware(["ADMIN", "MANAGER"]),
+    orderController.updateTracking,
+);
+
 orderRouter.post(
     "/orders",
     authMiddleware,

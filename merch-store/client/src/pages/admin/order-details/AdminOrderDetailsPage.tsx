@@ -7,6 +7,7 @@ import {
     getAdminOrderById,
     updateAdminOrderPaymentStatus,
     updateAdminOrderStatus,
+    updateAdminOrderTracking,
 } from "@/entities/order/api/order.api";
 import type {
     Order,
@@ -40,6 +41,8 @@ export function AdminOrderDetailsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+    const [isUpdatingTracking, setIsUpdatingTracking] = useState(false);
+    const [trackingInput, setTrackingInput] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -57,6 +60,7 @@ export function AdminOrderDetailsPage() {
             const result = await getAdminOrderById(id);
 
             setOrder(result);
+            setTrackingInput(result.trackingNumber ?? "");
         } catch (error) {
             console.error("LOAD_ADMIN_ORDER_ERROR:", error);
             setError("Не удалось загрузить заказ");
@@ -108,6 +112,35 @@ export function AdminOrderDetailsPage() {
             setStatusMessage("Не удалось обновить статус оплаты");
         } finally {
             setIsUpdatingPayment(false);
+        }
+    }
+
+    async function handleUpdateTracking() {
+        if (!order) return;
+
+        const trackingNumber = trackingInput.trim();
+
+        if (!trackingNumber) {
+            setStatusMessage("Введите трек-номер");
+            return;
+        }
+
+        try {
+            setIsUpdatingTracking(true);
+            setStatusMessage(null);
+
+            const updatedOrder = await updateAdminOrderTracking(order.id, {
+                trackingNumber,
+            });
+
+            setOrder(updatedOrder);
+            setTrackingInput(updatedOrder.trackingNumber ?? "");
+            setStatusMessage("Трек-номер обновлён, письмо отправлено клиенту");
+        } catch (error) {
+            console.error("UPDATE_ADMIN_TRACKING_ERROR:", error);
+            setStatusMessage("Не удалось обновить трек-номер");
+        } finally {
+            setIsUpdatingTracking(false);
         }
     }
 
@@ -346,6 +379,40 @@ export function AdminOrderDetailsPage() {
                                     className="mt-2"
                                 />
                             </div>
+
+                            <div>
+                                <label className="text-sm font-medium text-black">
+                                    Трек-номер
+                                </label>
+
+                                <div className="mt-2 flex gap-2">
+                                    <input
+                                        value={trackingInput}
+                                        onChange={(event) =>
+                                            setTrackingInput(event.target.value)
+                                        }
+                                        placeholder="Введите трек-номер"
+                                        className="h-11 min-w-0 flex-1 rounded-2xl border border-neutral-300 px-4 text-sm outline-none transition focus:border-black"
+                                    />
+
+                                    <button
+                                        type="button"
+                                        onClick={() => void handleUpdateTracking()}
+                                        disabled={
+                                            isUpdatingTracking ||
+                                            trackingInput.trim() ===
+                                                (order.trackingNumber ?? "")
+                                        }
+                                        className="inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {isUpdatingTracking ? "Сохраняем..." : "Сохранить"}
+                                    </button>
+                                </div>
+
+                                <p className="mt-2 text-xs text-neutral-400">
+                                    Клиенту придёт письмо с обновлённым трек-номером.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -427,8 +494,15 @@ export function AdminOrderDetailsPage() {
 
                             {order.cdekTrackNumber && (
                                 <DetailItem
-                                    label="Трек-номер"
+                                    label="Трек-номер CDEK"
                                     value={order.cdekTrackNumber}
+                                />
+                            )}
+
+                            {order.trackingNumber && (
+                                <DetailItem
+                                    label="Трек-номер"
+                                    value={order.trackingNumber}
                                 />
                             )}
                         </div>

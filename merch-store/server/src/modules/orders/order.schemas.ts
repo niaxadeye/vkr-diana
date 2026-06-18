@@ -83,4 +83,8 @@ export const updatePaymentStatusSchema = z.object({
     paymentStatus: z.enum(["PENDING", "PAID", "FAILED", "REFUNDED"]),
 });
 
+export const updateTrackingSchema = z.object({
+    trackingNumber: z.string().trim().min(1, "Трек-номер обязателен").max(100),
+});
+
 export type AdminOrderQuery = z.infer<typeof adminOrderQuerySchema>;

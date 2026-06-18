@@ -97,6 +97,9 @@ export type Order = {
     cdekOrderUuid: string | null;
     cdekTrackNumber: string | null;
 
+    trackingNumber: string | null;
+    trackingUpdatedAt: string | null;
+
     promoCode: string | null;
     subtotal: number;
     discountTotal: number;

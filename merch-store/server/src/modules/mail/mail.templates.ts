@@ -272,6 +272,76 @@ export function orderCreatedTemplate({
   `);
 }
 
+type OrderPaidTemplateInput = {
+  orderNumber: number;
+  customerName: string;
+  total: number;
+  items: OrderEmailItem[];
+  deliveryAddress: string;
+  orderUrl?: string;
+};
+
+export function orderPaidTemplate({
+  orderNumber,
+  customerName,
+  total,
+  items,
+  deliveryAddress,
+  orderUrl,
+}: OrderPaidTemplateInput) {
+  const itemsHtml = items
+    .map((item) => {
+      const details = [item.size, item.color].filter(Boolean).join(" / ");
+
+      return `
+        <tr>
+          <td style="padding:12px 0;border-bottom:1px solid #eeeeee;">
+            <div style="font-size:15px;font-weight:600;">${escapeHtml(item.title)}</div>
+            ${
+              details
+                ? `<div style="margin-top:4px;font-size:13px;color:#777777;">${escapeHtml(details)}</div>`
+                : ""
+            }
+          </td>
+          <td align="center" style="padding:12px 0;border-bottom:1px solid #eeeeee;font-size:14px;">
+            ${item.quantity}
+          </td>
+          <td align="right" style="padding:12px 0;border-bottom:1px solid #eeeeee;font-size:14px;">
+            ${formatPrice(item.totalPrice)}
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  return baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:26px;line-height:1.2;">Заказ №${orderNumber} оформлен и оплачен</h1>
+    <p style="margin:0 0 18px;font-size:16px;line-height:1.6;">
+      ${escapeHtml(customerName)}, спасибо за заказ. Оплата получена, мы приступаем к обработке.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:16px;">
+      <tr>
+        <th align="left" style="padding:0 0 10px;font-size:13px;color:#777777;">Товар</th>
+        <th align="center" style="padding:0 0 10px;font-size:13px;color:#777777;">Кол-во</th>
+        <th align="right" style="padding:0 0 10px;font-size:13px;color:#777777;">Сумма</th>
+      </tr>
+      ${itemsHtml}
+    </table>
+
+    <p style="margin:20px 0 0;font-size:18px;font-weight:700;">
+      Оплачено: ${formatPrice(total)}
+    </p>
+
+    <p style="margin:22px 0 0;font-size:15px;line-height:1.6;">
+      <strong>Адрес доставки:</strong><br />
+      ${escapeHtml(deliveryAddress)}
+    </p>
+
+    ${orderUrl ? button("Открыть заказ", orderUrl) : ""}
+  `);
+}
+
 type OrderShippedTemplateInput = {
   orderNumber: number;
   customerName: string;

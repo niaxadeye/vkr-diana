@@ -6,6 +6,7 @@ import {
     createOrderSchema,
     updateOrderStatusSchema,
     updatePaymentStatusSchema,
+    updateTrackingSchema,
 } from "./order.schemas";
 import { orderService } from "./order.service";
 
@@ -318,6 +319,44 @@ export const orderController = {
                 500,
                 "SERVER_ERROR",
                 "Не удалось обновить статус оплаты",
+            );
+        }
+    },
+
+    async updateTracking(req: Request, res: Response) {
+        const id = getParam(req.params.id);
+
+        if (!id) {
+            return fail(res, 400, "BAD_REQUEST", "ID заказа не передан");
+        }
+
+        const parsed = updateTrackingSchema.safeParse(req.body);
+
+        if (!parsed.success) {
+            return fail(
+                res,
+                400,
+                "VALIDATION_ERROR",
+                "Некорректный трек-номер",
+                parsed.error.issues,
+            );
+        }
+
+        try {
+            const order = await orderService.setTrackingNumber(
+                id,
+                parsed.data.trackingNumber,
+            );
+
+            return success(res, order);
+        } catch (error) {
+            console.error("UPDATE_TRACKING_ERROR:", error);
+
+            return fail(
+                res,
+                500,
+                "SERVER_ERROR",
+                "Не удалось обновить трек-номер",
             );
         }
     },

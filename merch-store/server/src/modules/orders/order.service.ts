@@ -1,6 +1,12 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../../prisma/prisma";
 import type { AdminOrderQuery, CreateOrderInput } from "./order.schemas";
+import {
+    sendOrderPaidEmail,
+    sendOrderShippedEmail,
+    sendOrderDeliveredEmail,
+    sendTrackingUpdatedEmail,
+} from "./order-email.service";
 
 type CreateOrderParams = { userId: string; data: CreateOrderInput; };
 
@@ -357,79 +363,95 @@ export const orderService = {
             | "DELIVERED"
             | "CANCELLED",
     ) {
-        return prisma.$transaction(async (tx) => {
-            const order = await tx.order.findUnique({
-                where: {
-                    id,
-                },
-                include: {
-                    items: true,
-                },
-            });
+        const { updatedOrder, statusChanged } = await prisma.$transaction(
+            async (tx) => {
+                const order = await tx.order.findUnique({
+                    where: {
+                        id,
+                    },
+                    include: {
+                        items: true,
+                    },
+                });
 
-            if (!order) {
-                throw new Error("ORDER_NOT_FOUND");
-            }
+                if (!order) {
+                    throw new Error("ORDER_NOT_FOUND");
+                }
 
-            const oldStatus = order.status;
-            const newStatus = status;
+                const oldStatus = order.status;
+                const newStatus = status;
 
-            if (oldStatus === newStatus) {
-                return order;
-            }
+                if (oldStatus === newStatus) {
+                    return { updatedOrder: order, statusChanged: false };
+                }
 
-            if (shouldForbidReturnToReserved(oldStatus, newStatus)) {
-                throw new Error("INVALID_ORDER_STATUS_ROLLBACK");
-            }
+                if (shouldForbidReturnToReserved(oldStatus, newStatus)) {
+                    throw new Error("INVALID_ORDER_STATUS_ROLLBACK");
+                }
 
-            if (shouldReleaseReserve(oldStatus, newStatus)) {
-                await releaseReservedStock(tx, order.items);
-            }
+                if (shouldReleaseReserve(oldStatus, newStatus)) {
+                    await releaseReservedStock(tx, order.items);
+                }
 
-            if (shouldShipReservedItems(oldStatus, newStatus)) {
-                for (const item of order.items) {
-                    if (!item.variantId) {
-                        throw new Error("ORDER_ITEM_VARIANT_NOT_FOUND");
-                    }
+                if (shouldShipReservedItems(oldStatus, newStatus)) {
+                    for (const item of order.items) {
+                        if (!item.variantId) {
+                            throw new Error("ORDER_ITEM_VARIANT_NOT_FOUND");
+                        }
 
-                    const result = await tx.productVariant.updateMany({
-                        where: {
-                            id: item.variantId,
-                            stock: {
-                                gte: item.quantity,
+                        const result = await tx.productVariant.updateMany({
+                            where: {
+                                id: item.variantId,
+                                stock: {
+                                    gte: item.quantity,
+                                },
+                                reservedStock: {
+                                    gte: item.quantity,
+                                },
                             },
-                            reservedStock: {
-                                gte: item.quantity,
+                            data: {
+                                stock: {
+                                    decrement: item.quantity,
+                                },
+                                reservedStock: {
+                                    decrement: item.quantity,
+                                },
                             },
-                        },
-                        data: {
-                            stock: {
-                                decrement: item.quantity,
-                            },
-                            reservedStock: {
-                                decrement: item.quantity,
-                            },
-                        },
-                    });
+                        });
 
-                    if (result.count !== 1) {
-                        throw new Error("PRODUCT_STOCK_SHIP_FAILED");
+                        if (result.count !== 1) {
+                            throw new Error("PRODUCT_STOCK_SHIP_FAILED");
+                        }
                     }
                 }
-            }
 
-            return tx.order.update({
-                where: {
-                    id,
-                },
-                data: {
-                    status: newStatus,
-                },
-                include: {
-                    items: true,
-                },
-            });
-        });
+                const updated = await tx.order.update({
+                    where: {
+                        id,
+                    },
+                    data: {
+                        status: newStatus,
+                    },
+                    include: {
+                        items: true,
+                    },
+                });
+
+                return { updatedOrder: updated, statusChanged: true };
+            },
+        );
+
+        // Письма отправляем после коммита транзакции, чтобы сбой почты
+        // не откатывал смену статуса.
+        if (statusChanged) {
+            if (updatedOrder.status === "SHIPPED") {
+                await sendOrderShippedEmail(updatedOrder);
+            } else if (updatedOrder.status === "DELIVERED") {
+                await sendOrderDeliveredEmail(updatedOrder);
+            }
+        }
+
+        return updatedOrder;
     },
 
 
@@ -462,37 +484,37 @@ export const orderService = {
         id: string,
         paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED",
     ) {
-        return prisma.$transaction(async (tx) => {
-            const order = await tx.order.findUnique({
+        const { order, justPaid } = await prisma.$transaction(async (tx) => {
+            const existing = await tx.order.findUnique({
                 where: { id },
                 include: { items: true },
             });
 
-            if (!order) {
+            if (!existing) {
                 throw new Error("ORDER_NOT_FOUND");
             }
 
             // Защита от даунгрейда: оплаченный заказ нельзя вернуть в PENDING
             // поздним/повторным уведомлением.
-            if (order.paymentStatus === "PAID" && paymentStatus === "PENDING") {
-                return order;
+            if (existing.paymentStatus === "PAID" && paymentStatus === "PENDING") {
+                return { order: existing, justPaid: false };
             }
 
             // PENDING ничего не меняет — ждём терминальный статус.
             if (paymentStatus === "PENDING") {
-                return order;
+                return { order: existing, justPaid: false };
             }
 
             // Идемпотентность: статус уже применён.
-            if (order.paymentStatus === paymentStatus) {
-                return order;
+            if (existing.paymentStatus === paymentStatus) {
+                return { order: existing, justPaid: false };
             }
 
             if (paymentStatus === "PAID") {
                 const nextStatus =
-                    order.status === "CREATED" ? "CONFIRMED" : order.status;
+                    existing.status === "CREATED" ? "CONFIRMED" : existing.status;
 
-                return tx.order.update({
+                const updated = await tx.order.update({
                     where: { id },
                     data: {
                         paymentStatus: "PAID",
@@ -503,14 +525,16 @@ export const orderService = {
                     },
                     include: { items: true },
                 });
+
+                return { order: updated, justPaid: true };
             }
 
             // FAILED / REFUNDED — освобождаем резерв и отменяем заказ,
             // если он ещё в зарезервированном состоянии.
-            if (isReservedOrderStatus(order.status)) {
-                await releaseReservedStock(tx, order.items);
+            if (isReservedOrderStatus(existing.status)) {
+                await releaseReservedStock(tx, existing.items);
 
-                return tx.order.update({
+                const updated = await tx.order.update({
                     where: { id },
                     data: {
                         paymentStatus,
@@ -520,15 +544,28 @@ export const orderService = {
                     },
                     include: { items: true },
                 });
+
+                return { order: updated, justPaid: false };
             }
 
             // Заказ уже не в резерве (например, отгружен) — меняем только оплату.
-            return tx.order.update({
+            const updated = await tx.order.update({
                 where: { id },
                 data: { paymentStatus },
                 include: { items: true },
             });
+
+            return { order: updated, justPaid: false };
         });
+
+        // Письмо об оплате — после коммита, чтобы сбой почты не откатывал оплату.
+        // justPaid выставляется только при реальном переходе в PAID, поэтому
+        // повторные вебхуки не приводят к дублю письма.
+        if (justPaid) {
+            await sendOrderPaidEmail(order);
+        }
+
+        return order;
     },
 
     /**
@@ -543,6 +580,24 @@ export const orderService = {
             },
             include: { items: true },
         });
+    },
+
+    /**
+     * Устанавливает/обновляет трек-номер и шлёт письмо клиенту.
+     */
+    async setTrackingNumber(id: string, trackingNumber: string) {
+        const order = await prisma.order.update({
+            where: { id },
+            data: {
+                trackingNumber,
+                trackingUpdatedAt: new Date(),
+            },
+            include: { items: true },
+        });
+
+        await sendTrackingUpdatedEmail(order);
+
+        return order;
     },
 };
 

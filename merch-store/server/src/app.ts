@@ -18,6 +18,7 @@ import { cdekRouter } from "./modules/cdek/cdek.routes.js";
 import { informationRouter } from "./modules/information/information.routes";
 import { homeRouter } from "./modules/home/home.routes";
 import { recommendedProductsRouter } from "./modules/recommended-products/recommended-products.routes";
+import { paymentsRouter } from "./modules/payments/payments.routes";
 
 export const app = express();
 ensureUploadFolders();
@@ -65,3 +66,4 @@ app.use("/api/cdek", cdekRouter);
 app.use("/api", informationRouter);
 app.use("/api", homeRouter);
 app.use("/api", recommendedProductsRouter);
+app.use("/api/payments", paymentsRouter);

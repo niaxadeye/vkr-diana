@@ -26,6 +26,37 @@ function shouldForbidReturnToReserved(oldStatus: string, newStatus: string) {
     );
 }
 
+type OrderItemForReserve = { variantId: string | null; quantity: number };
+
+async function releaseReservedStock(
+    tx: Prisma.TransactionClient,
+    items: OrderItemForReserve[],
+) {
+    for (const item of items) {
+        if (!item.variantId) {
+            throw new Error("ORDER_ITEM_VARIANT_NOT_FOUND");
+        }
+
+        const result = await tx.productVariant.updateMany({
+            where: {
+                id: item.variantId,
+                reservedStock: {
+                    gte: item.quantity,
+                },
+            },
+            data: {
+                reservedStock: {
+                    decrement: item.quantity,
+                },
+            },
+        });
+
+        if (result.count !== 1) {
+            throw new Error("RESERVED_STOCK_RELEASE_FAILED");
+        }
+    }
+}
+
 export const orderService = {
     async createOrder({ userId, data }: CreateOrderParams) {
         return prisma.$transaction(async (tx) => {
@@ -196,6 +227,29 @@ export const orderService = {
         });
     },
 
+    /**
+     * Заказы, зависшие в ожидании оплаты дольше, чем olderThan.
+     * Используется фоновым сборщиком для синка статуса и отмены просроченных.
+     */
+    async findStalePendingOrders(olderThan: Date, limit = 50) {
+        return prisma.order.findMany({
+            where: {
+                paymentStatus: "PENDING",
+                status: "CREATED",
+                createdAt: {
+                    lt: olderThan,
+                },
+            },
+            select: {
+                id: true,
+            },
+            orderBy: {
+                createdAt: "asc",
+            },
+            take: limit,
+        });
+    },
+
     async getOrderById(userId: string, orderId: string) {
         return prisma.order.findFirst({
             where: {
@@ -329,29 +383,7 @@ export const orderService = {
             }
 
             if (shouldReleaseReserve(oldStatus, newStatus)) {
-                for (const item of order.items) {
-                    if (!item.variantId) {
-                        throw new Error("ORDER_ITEM_VARIANT_NOT_FOUND");
-                    }
-
-                    const result = await tx.productVariant.updateMany({
-                        where: {
-                            id: item.variantId,
-                            reservedStock: {
-                                gte: item.quantity,
-                            },
-                        },
-                        data: {
-                            reservedStock: {
-                                decrement: item.quantity,
-                            },
-                        },
-                    });
-
-                    if (result.count !== 1) {
-                        throw new Error("RESERVED_STOCK_RELEASE_FAILED");
-                    }
-                }
+                await releaseReservedStock(tx, order.items);
             }
 
             if (shouldShipReservedItems(oldStatus, newStatus)) {
@@ -415,6 +447,82 @@ export const orderService = {
             include: {
                 items: true,
             },
+        });
+    },
+
+    /**
+     * Единая точка применения результата оплаты (вызывается вебхуком и синком).
+     * Идемпотентна и защищена от даунгрейда уже подтверждённой оплаты.
+     * - PAID    -> paymentStatus=PAID, заказ CREATED -> CONFIRMED (резерв сохраняется)
+     * - FAILED  -> paymentStatus=FAILED, заказ отменяется с возвратом резерва
+     * - REFUNDED-> paymentStatus=REFUNDED, заказ отменяется с возвратом резерва
+     * - PENDING -> без изменений (не сбрасываем уже выставленный статус)
+     */
+    async applyPaymentResult(
+        id: string,
+        paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED",
+    ) {
+        return prisma.$transaction(async (tx) => {
+            const order = await tx.order.findUnique({
+                where: { id },
+                include: { items: true },
+            });
+
+            if (!order) {
+                throw new Error("ORDER_NOT_FOUND");
+            }
+
+            // Защита от даунгрейда: оплаченный заказ нельзя вернуть в PENDING
+            // поздним/повторным уведомлением.
+            if (order.paymentStatus === "PAID" && paymentStatus === "PENDING") {
+                return order;
+            }
+
+            // PENDING ничего не меняет — ждём терминальный статус.
+            if (paymentStatus === "PENDING") {
+                return order;
+            }
+
+            // Идемпотентность: статус уже применён.
+            if (order.paymentStatus === paymentStatus) {
+                return order;
+            }
+
+            if (paymentStatus === "PAID") {
+                const nextStatus =
+                    order.status === "CREATED" ? "CONFIRMED" : order.status;
+
+                return tx.order.update({
+                    where: { id },
+                    data: {
+                        paymentStatus: "PAID",
+                        status: nextStatus,
+                    },
+                    include: { items: true },
+                });
+            }
+
+            // FAILED / REFUNDED — освобождаем резерв и отменяем заказ,
+            // если он ещё в зарезервированном состоянии.
+            if (isReservedOrderStatus(order.status)) {
+                await releaseReservedStock(tx, order.items);
+
+                return tx.order.update({
+                    where: { id },
+                    data: {
+                        paymentStatus,
+                        status: "CANCELLED",
+                    },
+                    include: { items: true },
+                });
+            }
+
+            // Заказ уже не в резерве (например, отгружен) — меняем только оплату.
+            return tx.order.update({
+                where: { id },
+                data: { paymentStatus },
+                include: { items: true },
+            });
         });
     },
 };

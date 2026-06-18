@@ -32,6 +32,9 @@ import { InformationPage } from "@/pages/information/InformationPage";
 import { AdminHomePage } from "@/pages/admin/home/AdminHomePage";
 import { InformationAdminPage } from "@/pages/admin/information/InformationAdminPage";
 import { AdminRecommendedProductsPage } from "@/pages/admin/recommended-product/AdminRecommendedProductsPage";
+import { PaymentSuccessPage } from "@/pages/payment/PaymentSuccessPage";
+import { PaymentErrorPage } from "@/pages/payment/PaymentErrorPage";
+import { PaymentAbortPage } from "@/pages/payment/PaymentAbortPage";
 
 export const router = createBrowserRouter([
   {
@@ -61,6 +64,9 @@ export const router = createBrowserRouter([
       { path: "cart", Component: CartPage },
       { path: "contacts", Component: ContactsPage },
       { path: "information", Component: InformationPage },
+      { path: "payment/success", Component: PaymentSuccessPage },
+      { path: "payment/error", Component: PaymentErrorPage },
+      { path: "payment/abort", Component: PaymentAbortPage },
 
       {
         Component: ProtectedRoute,

@@ -6,6 +6,10 @@ import { SliderArrow } from "@/shared/ui/slider-arrow/SliderArrow";
 import { Icon } from "@/shared/ui/icon/Icon";
 
 import { getMyOrders } from "@/entities/order/api/order.api";
+import {
+    createYandexPaymentForExistingOrder,
+    syncYandexPaymentStatus,
+} from "@/entities/payment/api/yandexPayment.api";
 import type { Order } from "@/entities/order/model/order.types";
 import { formatPrice } from "@/entities/cart/lib/formatPrice";
 import { getMediaUrl } from "@/shared/lib/getMediaUrl";
@@ -69,6 +73,28 @@ export function ProfilePage() {
             const result = await getMyOrders();
 
             setOrders(result);
+
+            const pendingOrders = result.filter(isOrderWaitingPayment);
+
+            if (pendingOrders.length > 0) {
+                const syncedOrders = await Promise.allSettled(
+                    pendingOrders.map((order) => syncYandexPaymentStatus(order.id)),
+                );
+
+                setOrders((currentOrders) =>
+                    currentOrders.map((order) => {
+                        const syncedOrder = syncedOrders.find(
+                            (resultItem) =>
+                                resultItem.status === "fulfilled" &&
+                                resultItem.value.order.id === order.id,
+                        );
+
+                        return syncedOrder?.status === "fulfilled"
+                            ? syncedOrder.value.order
+                            : order;
+                    }),
+                );
+            }
         } catch (error) {
             console.error("LOAD_ORDERS_ERROR:", error);
             setOrdersError("Не удалось загрузить заказы");
@@ -107,6 +133,19 @@ export function ProfilePage() {
         } catch (error) {
             console.error("SET_DEFAULT_DELIVERY_ADDRESS_ERROR:", error);
             toast.error("Не удалось выбрать адрес по умолчанию");
+        } finally {
+            setActionLoadingId(null);
+        }
+    }
+
+    async function handleRetryPayment(orderId: string) {
+        try {
+            setActionLoadingId(orderId);
+            const payment = await createYandexPaymentForExistingOrder(orderId);
+            window.location.href = payment.paymentUrl;
+        } catch (error) {
+            console.error("RETRY_YANDEX_PAYMENT_ERROR:", error);
+            toast.error("Не удалось открыть оплату. Попробуйте обновить страницу.");
         } finally {
             setActionLoadingId(null);
         }
@@ -265,9 +304,11 @@ export function ProfilePage() {
                                                     {isOrderWaitingPayment(order) && (
                                                         <button
                                                             type="button"
-                                                            className="inline-flex h-10 items-center justify-center rounded-full bg-[#060606] px-6 text-[15px] font-medium text-white transition hover:bg-neutral-800"
+                                                            onClick={() => void handleRetryPayment(order.id)}
+                                                            disabled={actionLoadingId === order.id}
+                                                            className="inline-flex h-10 items-center justify-center rounded-full bg-[#060606] px-6 text-[15px] font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
-                                                            Оплатить
+                                                            {actionLoadingId === order.id ? "Открываем..." : "Оплатить"}
                                                         </button>
                                                     )}
 

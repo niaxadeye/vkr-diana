@@ -17,7 +17,7 @@ import type { CdelReciveCalcTariff, CdekPackage } from "@/pages/cart/cdek.type"
 import { DeliveryAddressForm } from "@/entities/delivery-address/ui/DeliveryAddressForm";
 import { formatDeliveryAddress } from "@/entities/delivery-address/lib/formatDeliveryAddress";
 
-import { createOrder } from "@/entities/order/api/order.api";
+import { createYandexPayment } from "@/entities/payment/api/yandexPayment.api";
 import { useAuthStore } from "@/features/auth/model/auth.store";
 import { Icon } from "@/shared/ui/icon/Icon";
 import { apiClient } from "@/shared/api/apiClient";
@@ -27,7 +27,6 @@ export function CartPage() {
   const incrementItem = useCartStore((state) => state.incrementItem);
   const decrementItem = useCartStore((state) => state.decrementItem);
   const removeItem = useCartStore((state) => state.removeItem);
-  const clearCart = useCartStore((state) => state.clearCart);
 
   const user = useAuthStore((state) => state.user);
 
@@ -40,7 +39,6 @@ export function CartPage() {
   const [promoCode, setPromoCode] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
-  const [createdOrderNumber, setCreatedOrderNumber] = useState<number | null>(null);
 
   const [cdekPrice, setCdekPrice] = useState<number | null>(null);
 
@@ -148,7 +146,7 @@ export function CartPage() {
 
       const deliveryMethod = mapDeliveryTypeToMethod(selectedAddress.deliveryType);
 
-      const order = await createOrder({
+      const payment = await createYandexPayment({
         customer: {
           fullName: selectedAddress.fullName,
           phone: selectedAddress.phone,
@@ -179,8 +177,7 @@ export function CartPage() {
         promoCode: promoCode.trim() || null,
       });
 
-      clearCart();
-      setCreatedOrderNumber(order.orderNumber);
+      window.location.href = payment.paymentUrl;
     } catch (err) {
       console.error("CREATE_ORDER_ERROR", err);
       setOrderError("Не удалось оформить заказ. Проверьте данные и наличие товаров.");
@@ -231,28 +228,6 @@ export function CartPage() {
               Перейти в каталог
             </Link>
           </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (createdOrderNumber) {
-    return (
-      <main className="min-h-screen bg-white px-4 py-10 md:px-8">
-        <div className="mx-auto max-w-[760px] rounded-[28px] bg-neutral-50 p-8 text-center">
-          <h1 className="text-[32px] font-semibold text-black">Заказ оформлен</h1>
-          <p className="mt-4 text-[16px] text-neutral-500">
-            Номер заказа:{" "}
-            <span className="font-semibold text-black">
-              #{createdOrderNumber}
-            </span>
-          </p>
-          <Link
-              to="/catalog"
-              className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-[#060606] px-6 text-[15px] font-medium text-white transition-colors hover:bg-neutral-800"
-            >
-              Перейти в каталог
-            </Link>
         </div>
       </main>
     );

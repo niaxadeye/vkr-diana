@@ -41,6 +41,9 @@ export function ProfilePage() {
 
     const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
+    const [ordersExpanded, setOrdersExpanded] = useState(false);
+    const [addressesExpanded, setAddressesExpanded] = useState(false);
+
     const navigate = useNavigate();
     const logout = useAuthStore((state) => state.logout);
     const user = useAuthStore((state) => state.user);
@@ -151,6 +154,27 @@ export function ProfilePage() {
             setActionLoadingId(null);
         }
     }
+
+    const ORDERS_PREVIEW_COUNT = 2;
+    const ADDRESSES_PREVIEW_COUNT = 3;
+
+    // Заказы приходят с сервера отсортированными по дате (новые первыми).
+    const visibleOrders = ordersExpanded
+        ? orders
+        : orders.slice(0, ORDERS_PREVIEW_COUNT);
+
+    // Адрес по умолчанию первым, далее остальные по дате обновления (новые первыми).
+    const sortedAddresses = [...addresses].sort((a, b) => {
+        if (a.isDefault !== b.isDefault) {
+            return a.isDefault ? -1 : 1;
+        }
+
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+
+    const visibleAddresses = addressesExpanded
+        ? sortedAddresses
+        : sortedAddresses.slice(0, ADDRESSES_PREVIEW_COUNT);
 
     return (
         <>
@@ -266,7 +290,7 @@ export function ProfilePage() {
                                 </div>
                             ) : (
                                 <div>
-                                    {orders.map((order) => (
+                                    {visibleOrders.map((order) => (
                                         <article
                                             key={order.id}
                                             className="border-b border-[#e5e5e5] py-6 last:border-b-0"
@@ -321,13 +345,14 @@ export function ProfilePage() {
                                         </article>
                                     ))}
 
-                                    {orders.length > 3 && (
+                                    {orders.length > ORDERS_PREVIEW_COUNT && (
                                         <div className="mt-8 flex justify-center">
                                             <button
                                                 type="button"
+                                                onClick={() => setOrdersExpanded((value) => !value)}
                                                 className="inline-flex h-11 items-center justify-center rounded-full bg-[#f0f0f0] px-7 text-[15px] font-[500] text-[#060606] transition hover:bg-[#060606] hover:text-white"
                                             >
-                                                Загрузить ещё
+                                                {ordersExpanded ? "Свернуть" : "Загрузить ещё"}
                                             </button>
                                         </div>
                                     )}
@@ -373,7 +398,7 @@ export function ProfilePage() {
                                 </div>
                             ) : (
                                 <div className="grid gap-4 md:grid-cols-3">
-                                    {addresses.map((address) => (
+                                    {visibleAddresses.map((address) => (
                                         <article
                                             key={address.id}
                                             className="relative flex h-full flex-col rounded-2xl bg-neutral-50 p-7"
@@ -457,6 +482,20 @@ export function ProfilePage() {
                                     ))}
                                 </div>
                             )}
+
+                            {!addressesLoading &&
+                                !addressesError &&
+                                addresses.length > ADDRESSES_PREVIEW_COUNT && (
+                                    <div className="mt-8 flex justify-center">
+                                        <button
+                                            type="button"
+                                            onClick={() => setAddressesExpanded((value) => !value)}
+                                            className="inline-flex h-11 items-center justify-center rounded-full bg-[#f0f0f0] px-7 text-[15px] font-[500] text-[#060606] transition hover:bg-[#060606] hover:text-white"
+                                        >
+                                            {addressesExpanded ? "Свернуть" : "Загрузить ещё"}
+                                        </button>
+                                    </div>
+                                )}
                         </div>
                     </section>
                 </div>

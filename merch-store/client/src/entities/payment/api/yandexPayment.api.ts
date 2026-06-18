@@ -4,6 +4,7 @@ import type { CreateOrderPayload, Order, PaymentStatus } from "@/entities/order/
 export type CreateYandexPaymentResponse = {
   order: Order;
   paymentUrl: string;
+  paymentUrlExpiresAt?: string | null;
 };
 
 export type SyncYandexPaymentResponse = {

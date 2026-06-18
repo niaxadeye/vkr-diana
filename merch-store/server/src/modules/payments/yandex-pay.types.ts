@@ -74,6 +74,7 @@ export type YandexPayGetOrderResponse = {
 
 export type CreateYandexPayPaymentResult = {
   paymentUrl: string;
+  expiresAt: Date;
 };
 
 export type GetYandexPayPaymentStatusResult = {

@@ -39,6 +39,6 @@ export const env = {
       process.env.YANDEX_PAY_JWKS_URL ??
       "https://sandbox.pay.yandex.ru/api/jwks",
     // Время жизни ссылки на оплату в секундах (совпадает с ttl в запросе createOrder).
-    paymentTtlSeconds: Number(process.env.YANDEX_PAY_PAYMENT_TTL_SECONDS ?? 1800),
+    paymentTtlSeconds: Number(process.env.YANDEX_PAY_PAYMENT_TTL_SECONDS ?? 900),
   },
 };

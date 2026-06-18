@@ -236,6 +236,8 @@ model Order {
   total              Int
   status             OrderStatus      @default(CREATED)
   paymentStatus      PaymentStatus    @default(PENDING)
+  paymentUrl         String?          @db.Text
+  paymentUrlExpiresAt DateTime?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   deliveredAt        DateTime?

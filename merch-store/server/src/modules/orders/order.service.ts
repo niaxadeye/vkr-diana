@@ -497,6 +497,9 @@ export const orderService = {
                     data: {
                         paymentStatus: "PAID",
                         status: nextStatus,
+                        // Оплачено — ссылка больше не нужна.
+                        paymentUrl: null,
+                        paymentUrlExpiresAt: null,
                     },
                     include: { items: true },
                 });
@@ -512,6 +515,8 @@ export const orderService = {
                     data: {
                         paymentStatus,
                         status: "CANCELLED",
+                        paymentUrl: null,
+                        paymentUrlExpiresAt: null,
                     },
                     include: { items: true },
                 });
@@ -523,6 +528,20 @@ export const orderService = {
                 data: { paymentStatus },
                 include: { items: true },
             });
+        });
+    },
+
+    /**
+     * Сохраняет в заказе актуальную ссылку на оплату и срок её действия.
+     */
+    async savePaymentLink(id: string, paymentUrl: string, expiresAt: Date) {
+        return prisma.order.update({
+            where: { id },
+            data: {
+                paymentUrl,
+                paymentUrlExpiresAt: expiresAt,
+            },
+            include: { items: true },
         });
     },
 };

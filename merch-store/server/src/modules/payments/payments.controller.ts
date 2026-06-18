@@ -70,9 +70,16 @@ export const paymentsController = {
 
       const payment = await yandexPayService.createYandexPayOrder(order);
 
+      const updatedOrder = await orderService.savePaymentLink(
+        order.id,
+        payment.paymentUrl,
+        payment.expiresAt,
+      );
+
       return success(res, {
-        order,
+        order: updatedOrder,
         paymentUrl: payment.paymentUrl,
+        paymentUrlExpiresAt: payment.expiresAt,
       });
     } catch (error) {
       console.error("CREATE_YANDEX_PAYMENT_ERROR:", error);
@@ -133,11 +140,34 @@ export const paymentsController = {
         return fail(res, 400, "ORDER_CANCELLED", "Отменённый заказ нельзя оплатить");
       }
 
+      // Переиспользуем уже выданную ссылку, пока она не истекла,
+      // чтобы не плодить лишние платежи в Яндексе.
+      const now = Date.now();
+      const hasLiveLink =
+        order.paymentUrl &&
+        order.paymentUrlExpiresAt &&
+        new Date(order.paymentUrlExpiresAt).getTime() > now;
+
+      if (hasLiveLink) {
+        return success(res, {
+          order,
+          paymentUrl: order.paymentUrl,
+          paymentUrlExpiresAt: order.paymentUrlExpiresAt,
+        });
+      }
+
       const payment = await yandexPayService.createYandexPayOrder(order);
 
+      const updatedOrder = await orderService.savePaymentLink(
+        order.id,
+        payment.paymentUrl,
+        payment.expiresAt,
+      );
+
       return success(res, {
-        order,
+        order: updatedOrder,
         paymentUrl: payment.paymentUrl,
+        paymentUrlExpiresAt: payment.expiresAt,
       });
     } catch (error) {
       console.error("CREATE_EXISTING_YANDEX_PAYMENT_ERROR:", error);

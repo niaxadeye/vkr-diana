@@ -13,6 +13,7 @@ import {
 import type { Order } from "@/entities/order/model/order.types";
 import { formatPrice } from "@/entities/cart/lib/formatPrice";
 import { getMediaUrl } from "@/shared/lib/getMediaUrl";
+import { useCountdown } from "@/shared/lib/useCountdown";
 
 import { ChangeEmailModal } from "./ui/ChangeEmailModal";
 import { ChangePasswordModal } from "./ui/ChangePasswordModal";
@@ -292,24 +293,18 @@ export function ProfilePage() {
                                                 />
 
                                                 {isOrderWaitingPayment(order) ? (
-                                                    <InfoColumn
-                                                        label="Оплатить до"
-                                                        value={getOrderPaymentDeadline(order)}
-                                                    />
+                                                    <PaymentDeadlineColumn order={order} />
                                                 ) : (
                                                     <div className="hidden md:block" />
                                                 )}
 
                                                 <div className="flex h-10 items-center justify-between gap-3 md:justify-end">
                                                     {isOrderWaitingPayment(order) && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => void handleRetryPayment(order.id)}
-                                                            disabled={actionLoadingId === order.id}
-                                                            className="inline-flex h-10 items-center justify-center rounded-full bg-[#060606] px-6 text-[15px] font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-                                                        >
-                                                            {actionLoadingId === order.id ? "Открываем..." : "Оплатить"}
-                                                        </button>
+                                                        <PayButton
+                                                            order={order}
+                                                            loading={actionLoadingId === order.id}
+                                                            onPay={() => void handleRetryPayment(order.id)}
+                                                        />
                                                     )}
 
                                                     <OrderPreviewImages order={order} />
@@ -547,27 +542,55 @@ function isOrderWaitingPayment(order: Order) {
     );
 }
 
-function getOrderPaymentDeadline(order: Order) {
-    const deadline = order.paymentExpiresAt
-        ? new Date(order.paymentExpiresAt)
-        : new Date(new Date(order.createdAt).getTime() + 2 * 60 * 60 * 1000);
+function getPaymentDeadline(order: Order): string | null {
+    return order.paymentUrlExpiresAt ?? order.paymentExpiresAt ?? null;
+}
 
-    const now = new Date();
-    const diffMs = deadline.getTime() - now.getTime();
+function PaymentDeadlineColumn({ order }: { order: Order }) {
+    const deadline = getPaymentDeadline(order);
+    const { formatted, isExpired } = useCountdown(deadline);
 
-    if (diffMs <= 0) {
-        return "00:00:00";
+    if (!deadline) {
+        return <div className="hidden md:block" />;
     }
 
-    const totalSeconds = Math.floor(diffMs / 1000);
+    return (
+        <InfoColumn
+            label="Оплатить до"
+            value={isExpired ? "Ссылка истекла" : formatted}
+        />
+    );
+}
 
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+function PayButton({
+    order,
+    loading,
+    onPay,
+}: {
+    order: Order;
+    loading: boolean;
+    onPay: () => void;
+}) {
+    const deadline = getPaymentDeadline(order);
+    const { isExpired } = useCountdown(deadline);
 
-    return [hours, minutes, seconds]
-        .map((value) => String(value).padStart(2, "0"))
-        .join(":");
+    // Ссылка истекла, но заказ ещё ждёт оплату — даём создать новую ссылку.
+    const label = loading
+        ? "Открываем..."
+        : isExpired
+            ? "Оплатить заново"
+            : "Оплатить";
+
+    return (
+        <button
+            type="button"
+            onClick={onPay}
+            disabled={loading}
+            className="inline-flex h-10 items-center justify-center rounded-full bg-[#060606] px-6 text-[15px] font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+            {label}
+        </button>
+    );
 }
 
 function getOrderStatusLabel(status: Order["status"], order?: Order) {

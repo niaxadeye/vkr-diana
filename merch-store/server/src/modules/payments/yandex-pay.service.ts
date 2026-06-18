@@ -66,7 +66,7 @@ function buildCreateOrderRequest(order: OrderWithItems): YandexPayCreateOrderReq
     orderSource: "WEBSITE",
     billingPhone: order.customerPhone,
     fiscalContact: order.customerEmail ?? order.customerPhone,
-    ttl: 1800,
+    ttl: env.yandexPay.paymentTtlSeconds,
     purpose: `Оплата заказа #${order.orderNumber}`,
     redirectUrls: {
       onSuccess: buildRedirectUrl("/payment/success", order.id),
@@ -128,6 +128,7 @@ async function createYandexPayOrder(
 
   return {
     paymentUrl,
+    expiresAt: new Date(Date.now() + env.yandexPay.paymentTtlSeconds * 1000),
   };
 }
 

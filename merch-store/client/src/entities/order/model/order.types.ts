@@ -106,6 +106,8 @@ export type Order = {
     paymentStatus: PaymentStatus;
 
     paymentExpiresAt?: string | null;
+    paymentUrl?: string | null;
+    paymentUrlExpiresAt?: string | null;
 
     createdAt: string;
     updatedAt: string;

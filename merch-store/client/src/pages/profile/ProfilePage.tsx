@@ -307,8 +307,8 @@ export function ProfilePage() {
                                                 </div>
 
                                                 <InfoColumn
-                                                    label="Создан"
-                                                    value={formatDateTime(order.createdAt)}
+                                                    label={formatDateTime(order.createdAt)}
+                                                    value="Создан"
                                                 />
 
                                                 <InfoColumn

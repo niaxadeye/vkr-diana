@@ -115,6 +115,84 @@ export function passwordResetTemplate({
   `);
 }
 
+type EmailChangeConfirmTemplateInput = {
+  name?: string | null;
+  confirmUrl: string;
+  newEmail: string;
+};
+
+export function emailChangeConfirmTemplate({
+  name,
+  confirmUrl,
+  newEmail,
+}: EmailChangeConfirmTemplateInput) {
+  const safeName = name ? escapeHtml(name) : "Здравствуйте";
+
+  return baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:26px;line-height:1.2;">Подтверждение смены email</h1>
+    <p style="margin:0 0 12px;font-size:16px;line-height:1.6;">
+      ${safeName}, мы получили запрос на смену адреса электронной почты на
+      <strong>${escapeHtml(newEmail)}</strong>.
+    </p>
+    <p style="margin:0;font-size:16px;line-height:1.6;">
+      Чтобы подтвердить новый адрес, нажмите на кнопку ниже.
+    </p>
+    ${button("Подтвердить новый email", confirmUrl)}
+    <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#777777;">
+      Если кнопка не открывается, скопируйте ссылку в браузер:<br />
+      <span style="word-break:break-all;">${escapeHtml(confirmUrl)}</span>
+    </p>
+    <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#777777;">
+      Если вы не запрашивали смену email, просто проигнорируйте это письмо — адрес не изменится.
+      Ссылка действует ограниченное время.
+    </p>
+  `);
+}
+
+type PasswordChangedTemplateInput = {
+  name?: string | null;
+};
+
+export function passwordChangedTemplate({ name }: PasswordChangedTemplateInput) {
+  const safeName = name ? escapeHtml(name) : "Здравствуйте";
+
+  return baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:26px;line-height:1.2;">Пароль изменён</h1>
+    <p style="margin:0 0 12px;font-size:16px;line-height:1.6;">
+      ${safeName}, пароль от вашего аккаунта Acrylogo был успешно изменён.
+    </p>
+    <p style="margin:0;font-size:16px;line-height:1.6;">
+      Если это были вы — никаких действий не требуется.
+    </p>
+    <p style="margin:18px 0 0;font-size:15px;line-height:1.6;color:#b00020;">
+      Если вы не меняли пароль, срочно восстановите доступ через «Забыли пароль» и свяжитесь с поддержкой.
+    </p>
+  `);
+}
+
+type EmailChangedNoticeTemplateInput = {
+  name?: string | null;
+  newEmail: string;
+};
+
+export function emailChangedNoticeTemplate({
+  name,
+  newEmail,
+}: EmailChangedNoticeTemplateInput) {
+  const safeName = name ? escapeHtml(name) : "Здравствуйте";
+
+  return baseTemplate(`
+    <h1 style="margin:0 0 16px;font-size:26px;line-height:1.2;">Email изменён</h1>
+    <p style="margin:0 0 12px;font-size:16px;line-height:1.6;">
+      ${safeName}, адрес электронной почты вашего аккаунта Acrylogo был изменён на
+      <strong>${escapeHtml(newEmail)}</strong>.
+    </p>
+    <p style="margin:18px 0 0;font-size:15px;line-height:1.6;color:#b00020;">
+      Если вы не запрашивали смену email, срочно свяжитесь с поддержкой — доступ к аккаунту мог быть скомпрометирован.
+    </p>
+  `);
+}
+
 type OrderEmailItem = {
   title: string;
   size?: string | null;

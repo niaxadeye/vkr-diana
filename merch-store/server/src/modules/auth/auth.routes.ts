@@ -21,3 +21,11 @@ authRouter.post(
 
 authRouter.post("/forgot-password", authController.forgotPassword);
 authRouter.post("/reset-password", authController.resetPassword);
+
+authRouter.post("/change-email", authMiddleware, authController.changeEmail);
+authRouter.get("/confirm-email-change", authController.confirmEmailChange);
+authRouter.post(
+  "/change-password",
+  authMiddleware,
+  authController.changePassword,
+);

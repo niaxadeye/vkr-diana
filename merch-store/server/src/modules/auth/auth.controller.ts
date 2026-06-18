@@ -7,6 +7,9 @@ import {
   registerSchema,
   resetPasswordSchema,
   verifyEmailSchema,
+  changeEmailSchema,
+  confirmEmailChangeSchema,
+  changePasswordSchema,
 } from "./auth.schemas";
 import { fail, success } from "../../utils/api-response";
 import { env } from "../../config/env";
@@ -17,6 +20,9 @@ import {
   resetPassword as resetPasswordByToken,
   sendEmailVerification,
   verifyEmail as verifyEmailByToken,
+  requestEmailChange,
+  confirmEmailChange as confirmEmailChangeByToken,
+  changePassword as changePasswordForUser,
 } from "./auth-email.service";
 
 const refreshCookieName = "refreshToken";
@@ -359,6 +365,196 @@ export const authController = {
         "RESET_PASSWORD_ERROR",
         "Не удалось изменить пароль",
       );
+    }
+  },
+
+  async changeEmail(req: Request, res: Response) {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return fail(res, 401, "UNAUTHORIZED", "Необходима авторизация");
+    }
+
+    const parsed = changeEmailSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return fail(
+        res,
+        400,
+        "VALIDATION_ERROR",
+        "Некорректные данные",
+        parsed.error.issues,
+      );
+    }
+
+    try {
+      await requestEmailChange(
+        userId,
+        parsed.data.newEmail,
+        parsed.data.password,
+      );
+
+      return success(res, {
+        message:
+          "Мы отправили письмо на новый адрес. Подтвердите смену email по ссылке из письма.",
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === "INVALID_PASSWORD") {
+          return fail(res, 400, "INVALID_PASSWORD", "Неверный пароль");
+        }
+
+        if (error.message === "EMAIL_SAME_AS_CURRENT") {
+          return fail(
+            res,
+            400,
+            "EMAIL_SAME_AS_CURRENT",
+            "Новый email совпадает с текущим",
+          );
+        }
+
+        if (error.message === "EMAIL_ALREADY_EXISTS") {
+          return fail(
+            res,
+            409,
+            "EMAIL_ALREADY_EXISTS",
+            "Этот email уже занят",
+          );
+        }
+
+        if (error.message === "USER_NOT_FOUND") {
+          return fail(res, 404, "USER_NOT_FOUND", "Пользователь не найден");
+        }
+      }
+
+      console.error("[CHANGE_EMAIL_ERROR]", error);
+
+      return fail(res, 500, "CHANGE_EMAIL_ERROR", "Не удалось сменить email");
+    }
+  },
+
+  async confirmEmailChange(req: Request, res: Response) {
+    const parsed = confirmEmailChangeSchema.safeParse(req.query);
+
+    if (!parsed.success) {
+      return fail(
+        res,
+        400,
+        "VALIDATION_ERROR",
+        "Некорректный токен",
+        parsed.error.issues,
+      );
+    }
+
+    try {
+      const result = await confirmEmailChangeByToken(parsed.data.token);
+
+      return success(res, {
+        message: "Email успешно изменён",
+        email: result.email,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === "EMAIL_CHANGE_TOKEN_INVALID") {
+          return fail(
+            res,
+            400,
+            "EMAIL_CHANGE_TOKEN_INVALID",
+            "Ссылка подтверждения недействительна",
+          );
+        }
+
+        if (error.message === "EMAIL_CHANGE_TOKEN_ALREADY_USED") {
+          return fail(
+            res,
+            400,
+            "EMAIL_CHANGE_TOKEN_ALREADY_USED",
+            "Ссылка подтверждения уже была использована",
+          );
+        }
+
+        if (error.message === "EMAIL_CHANGE_TOKEN_EXPIRED") {
+          return fail(
+            res,
+            400,
+            "EMAIL_CHANGE_TOKEN_EXPIRED",
+            "Срок действия ссылки истёк",
+          );
+        }
+
+        if (error.message === "EMAIL_ALREADY_EXISTS") {
+          return fail(
+            res,
+            409,
+            "EMAIL_ALREADY_EXISTS",
+            "Этот email уже занят",
+          );
+        }
+      }
+
+      console.error("[CONFIRM_EMAIL_CHANGE_ERROR]", error);
+
+      return fail(
+        res,
+        500,
+        "CONFIRM_EMAIL_CHANGE_ERROR",
+        "Не удалось подтвердить смену email",
+      );
+    }
+  },
+
+  async changePassword(req: Request, res: Response) {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return fail(res, 401, "UNAUTHORIZED", "Необходима авторизация");
+    }
+
+    const parsed = changePasswordSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return fail(
+        res,
+        400,
+        "VALIDATION_ERROR",
+        "Некорректные данные",
+        parsed.error.issues,
+      );
+    }
+
+    try {
+      await changePasswordForUser(
+        userId,
+        parsed.data.currentPassword,
+        parsed.data.newPassword,
+      );
+
+      return success(res, {
+        message: "Пароль успешно изменён",
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === "INVALID_PASSWORD") {
+          return fail(res, 400, "INVALID_PASSWORD", "Неверный текущий пароль");
+        }
+
+        if (error.message === "PASSWORD_SAME_AS_CURRENT") {
+          return fail(
+            res,
+            400,
+            "PASSWORD_SAME_AS_CURRENT",
+            "Новый пароль совпадает с текущим",
+          );
+        }
+
+        if (error.message === "USER_NOT_FOUND") {
+          return fail(res, 404, "USER_NOT_FOUND", "Пользователь не найден");
+        }
+      }
+
+      console.error("[CHANGE_PASSWORD_ERROR]", error);
+
+      return fail(res, 500, "CHANGE_PASSWORD_ERROR", "Не удалось изменить пароль");
     }
   },
 };

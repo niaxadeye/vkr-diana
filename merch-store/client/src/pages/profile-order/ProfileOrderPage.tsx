@@ -7,6 +7,12 @@ import { formatPrice } from "@/entities/cart/lib/formatPrice";
 import { getMediaUrl } from "@/shared/lib/getMediaUrl";
 import { Icon } from "@/shared/ui/icon/Icon";
 
+function buildCdekTrackingUrl(trackingNumber: string) {
+    return `https://www.cdek.ru/ru/tracking?order_id=${encodeURIComponent(
+        trackingNumber,
+    )}`;
+}
+
 export function ProfileOrderPage() {
     const { id } = useParams();
 
@@ -43,7 +49,7 @@ export function ProfileOrderPage() {
     if (isLoading) {
         return (
             <main className="min-h-screen bg-white px-5 py-10 md:px-12">
-                <div className="mx-auto max-w-[1250px] rounded-2xl bg-neutral-50 p-7 text-sm text-neutral-500">
+                <div className="mx-auto max-w-[1250px] rounded-[28px] bg-[#fafafa] p-7 text-[15px] text-[#666666]">
                     Загружаем заказ...
                 </div>
             </main>
@@ -53,18 +59,18 @@ export function ProfileOrderPage() {
     if (error || !order) {
         return (
             <main className="min-h-screen bg-white px-5 py-10 md:px-12">
-                <div className="mx-auto max-w-[760px] rounded-[28px] bg-neutral-50 p-8 text-center">
-                    <h1 className="text-[32px] font-semibold tracking-[-0.05em] text-black">
+                <div className="mx-auto max-w-[760px] rounded-[28px] bg-[#fafafa] p-8 text-center">
+                    <h1 className="text-[32px] font-[500] tracking-[-0.04em] text-[#060606]">
                         Заказ не найден
                     </h1>
 
-                    <p className="mt-3 text-[15px] text-neutral-500">
+                    <p className="mt-3 text-[15px] text-[#666666]">
                         {error ?? "Возможно, заказ был удалён или недоступен."}
                     </p>
 
                     <Link
                         to="/profile"
-                        className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-black px-7 text-[15px] font-medium text-white transition hover:bg-neutral-800"
+                        className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-[#060606] px-7 text-[15px] font-[500] text-white transition hover:bg-neutral-800"
                     >
                         Вернуться в профиль
                     </Link>
@@ -73,26 +79,28 @@ export function ProfileOrderPage() {
         );
     }
 
+    const trackingNumber = order.trackingNumber ?? order.cdekTrackNumber;
+
     return (
         <main className="min-h-screen bg-white px-5 py-10 md:px-12">
             <div className="mx-auto max-w-[1250px]">
                 <div className="flex items-center gap-4">
                     <Link
                         to="/profile"
-                        className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-black transition hover:bg-black hover:text-white"
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f0f0f0] text-[#060606] transition hover:bg-[#060606] hover:text-white"
                         aria-label="Назад к профилю"
                     >
                         <Icon name="arrow-left" className="h-5 w-5" />
                     </Link>
 
-                    <h1 className="text-[36px] font-bold tracking-[-0.04em]">
+                    <h1 className="text-[36px] font-[500] leading-[44px] tracking-[-0.04em] text-[#060606] max-md:text-[24px] max-md:leading-[32px]">
                         Заказ #{order.orderNumber}
                     </h1>
                 </div>
 
                 <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_410px]">
                     <section>
-                        <div className="hidden border-b border-neutral-200 pb-4 text-sm text-neutral-500 md:grid md:grid-cols-[1fr_120px_120px_120px]">
+                        <div className="hidden border-b border-[#e5e5e5] pb-4 text-[14px] text-[#666666] md:grid md:grid-cols-[1fr_120px_120px_120px]">
                             <span>Товар</span>
                             <span className="text-right">Цена</span>
                             <span className="text-right">Кол-во</span>
@@ -103,9 +111,9 @@ export function ProfileOrderPage() {
                             {order.items.map((item) => (
                                 <article
                                     key={item.id}
-                                    className="grid grid-cols-[80px_1fr] gap-5 border-b border-neutral-200 py-6 md:grid-cols-[80px_1fr_120px_120px_120px]"
+                                    className="grid grid-cols-[80px_1fr] gap-5 border-b border-[#e5e5e5] py-6 md:grid-cols-[80px_1fr_120px_120px_120px]"
                                 >
-                                    <div className="h-20 w-20 overflow-hidden bg-neutral-100">
+                                    <div className="h-20 w-20 overflow-hidden bg-[#f0f0f0]">
                                         {item.imageUrl ? (
                                             <img
                                                 src={getMediaUrl(item.imageUrl)}
@@ -113,26 +121,26 @@ export function ProfileOrderPage() {
                                                 className="h-full w-full object-cover"
                                             />
                                         ) : (
-                                            <div className="flex h-full w-full items-center justify-center text-xs text-neutral-400">
+                                            <div className="flex h-full w-full items-center justify-center text-xs text-[#666666]">
                                                 Нет фото
                                             </div>
                                         )}
                                     </div>
 
                                     <div>
-                                        <p className="text-sm font-bold uppercase leading-5">
+                                        <p className="text-[14px] font-[400] uppercase leading-5 text-[#060606]">
                                             {item.title}
                                         </p>
 
                                         {(item.size || item.color) && (
-                                            <p className="mt-2 text-sm text-neutral-500">
+                                            <p className="mt-2 text-[14px] text-[#666666]">
                                                 {[item.size, item.color]
                                                     .filter(Boolean)
                                                     .join(" / ")}
                                             </p>
                                         )}
 
-                                        <div className="mt-3 grid grid-cols-3 gap-3 text-sm md:hidden">
+                                        <div className="mt-3 grid grid-cols-3 gap-3 text-[14px] md:hidden">
                                             <MobileInfo
                                                 label="Цена"
                                                 value={formatPrice(
@@ -152,15 +160,15 @@ export function ProfileOrderPage() {
                                         </div>
                                     </div>
 
-                                    <div className="hidden text-right text-sm font-bold md:block">
+                                    <div className="hidden text-right text-[14px] font-[500] text-[#060606] md:block">
                                         {formatPrice(item.unitPrice)}
                                     </div>
 
-                                    <div className="hidden text-right text-sm font-bold md:block">
+                                    <div className="hidden text-right text-[14px] font-[500] text-[#060606] md:block">
                                         {item.quantity}
                                     </div>
 
-                                    <div className="hidden text-right text-sm font-bold md:block">
+                                    <div className="hidden text-right text-[14px] font-[500] text-[#060606] md:block">
                                         {formatPrice(item.totalPrice)}
                                     </div>
                                 </article>
@@ -195,8 +203,8 @@ export function ProfileOrderPage() {
                         </div>
                     </section>
 
-                    <aside className="rounded-[28px] bg-neutral-50 p-7">
-                        <h2 className="text-xl font-bold tracking-[-0.03em]">
+                    <aside className="rounded-[28px] bg-[#fafafa] p-7">
+                        <h2 className="text-[22px] font-[500] tracking-[-0.03em] text-[#060606]">
                             Детали
                         </h2>
 
@@ -246,6 +254,26 @@ export function ProfileOrderPage() {
                                     order.paymentStatus,
                                 )}
                             />
+
+                            {trackingNumber && (
+                                <div>
+                                    <p className="text-[14px] text-[#666666]">
+                                        Трек-номер
+                                    </p>
+                                    <p className="mt-1 text-[16px] font-[500] leading-6 text-[#060606]">
+                                        {trackingNumber}
+                                    </p>
+
+                                    <a
+                                        href={buildCdekTrackingUrl(trackingNumber)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-3 inline-flex h-10 items-center justify-center rounded-full bg-[#060606] px-5 text-[15px] font-[500] text-white transition hover:bg-neutral-800"
+                                    >
+                                        Отследить
+                                    </a>
+                                </div>
+                            )}
                         </div>
                     </aside>
                 </div>
@@ -257,8 +285,8 @@ export function ProfileOrderPage() {
 function MobileInfo({ label, value }: { label: string; value: string }) {
     return (
         <div>
-            <p className="text-neutral-500">{label}</p>
-            <p className="font-semibold">{value}</p>
+            <p className="text-[#666666]">{label}</p>
+            <p className="font-[500] text-[#060606]">{value}</p>
         </div>
     );
 }
@@ -273,13 +301,13 @@ function OrderSummaryRow({
     strong?: boolean;
 }) {
     return (
-        <div className="flex items-center justify-between text-base">
-            <span className="text-neutral-500">{label}</span>
+        <div className="flex items-center justify-between text-[16px]">
+            <span className="text-[#666666]">{label}</span>
             <span
                 className={
                     strong
-                        ? "text-lg font-bold text-black"
-                        : "font-semibold text-black"
+                        ? "text-[18px] font-[600] text-[#060606]"
+                        : "font-[500] text-[#060606]"
                 }
             >
                 {value}
@@ -291,8 +319,8 @@ function OrderSummaryRow({
 function DetailItem({ label, value }: { label: string; value: string }) {
     return (
         <div>
-            <p className="text-sm text-neutral-500">{label}</p>
-            <p className="mt-1 text-base font-medium leading-6 text-black">
+            <p className="text-[14px] text-[#666666]">{label}</p>
+            <p className="mt-1 text-[16px] font-[500] leading-6 text-[#060606]">
                 {value}
             </p>
         </div>

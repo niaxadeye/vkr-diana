@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown, Pencil } from "lucide-react";
+import { toast } from "sonner";
 
 import { useCartStore } from "@/entities/cart/model/cart.store";
 import { formatPrice } from "@/entities/cart/lib/formatPrice";
@@ -45,7 +46,6 @@ export function CartPage() {
     discountAmount: number;
   } | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
-  const [promoError, setPromoError] = useState<string | null>(null);
 
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -106,20 +106,20 @@ export function CartPage() {
     const code = promoCode.trim();
 
     if (!code) {
-      setPromoError("Введите промокод");
+      toast.error("Введите промокод");
       return;
     }
 
     try {
       setPromoLoading(true);
-      setPromoError(null);
 
       const result = await validatePromoCode(code, subtotal);
 
       setAppliedPromo(result);
+      toast.success(`Промокод ${result.code} применён · −${result.discountPercent}%`);
     } catch (err: any) {
       setAppliedPromo(null);
-      setPromoError(
+      toast.error(
         err?.response?.data?.error?.message ?? "Не удалось применить промокод",
       );
     } finally {
@@ -130,7 +130,6 @@ export function CartPage() {
   function handleResetPromo() {
     setAppliedPromo(null);
     setPromoCode("");
-    setPromoError(null);
   }
 
   // --- Расчет доставки через CDEK API ---
@@ -553,12 +552,6 @@ export function CartPage() {
                       {promoLoading ? "Проверяем..." : "Применить"}
                     </button>
                   </div>
-                )}
-
-                {promoError && (
-                  <p className="mt-2 text-[13px] font-medium text-red-500">
-                    {promoError}
-                  </p>
                 )}
               </div>
 

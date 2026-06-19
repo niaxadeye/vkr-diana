@@ -62,10 +62,11 @@ export function CartPage() {
   const selectedAddress =
     addresses.find((a) => a.id === selectedAddressId) ?? null;
 
-  // Скидка действительна, пока её сумма не превышает текущий subtotal
-  // (корзина могла измениться после применения промокода).
+  // Скидку пересчитываем от процента по текущему subtotal, чтобы при любом
+  // изменении корзины она обновлялась автоматически. Формула совпадает с
+  // серверной (округление вниз до целых рублей).
   const discount = appliedPromo
-    ? Math.min(appliedPromo.discountAmount, subtotal)
+    ? Math.floor((subtotal * appliedPromo.discountPercent) / 100)
     : 0;
 
   const total = subtotal - discount + (cdekPrice ?? 0);

@@ -31,13 +31,40 @@ function buildRedirectUrl(path: string, orderId: string) {
 }
 
 function buildCartItems(order: OrderWithItems): YandexPayCartItem[] {
-  const productItems = order.items.map((item) => ({
+  // Скидку по промокоду распределяем пропорционально по товарам, чтобы сумма
+  // позиций корзины точно совпала с order.total — иначе Яндекс Пэй отклоняет
+  // создание заказа (YANDEX_PAY_CREATE_ORDER_FAILED).
+  const discountTotal = order.discountTotal ?? 0;
+  const subtotal = order.items.reduce((sum, item) => sum + item.totalPrice, 0);
+
+  const discountedTotals = order.items.map((item) => {
+    if (discountTotal <= 0 || subtotal <= 0) {
+      return item.totalPrice;
+    }
+
+    const itemDiscount = Math.floor(
+      (item.totalPrice * discountTotal) / subtotal,
+    );
+
+    return item.totalPrice - itemDiscount;
+  });
+
+  // Остаток от округления вычитаем из первой позиции, чтобы итог сошёлся.
+  const distributedSum = discountedTotals.reduce((sum, value) => sum + value, 0);
+  const targetSum = subtotal - discountTotal;
+  const remainder = distributedSum - targetSum;
+
+  if (remainder !== 0 && discountedTotals.length > 0) {
+    discountedTotals[0] -= remainder;
+  }
+
+  const productItems = order.items.map((item, index) => ({
     productId: item.variantId ?? item.productId,
     title: item.title,
     quantity: {
       count: String(item.quantity),
     },
-    total: formatRub(item.totalPrice),
+    total: formatRub(discountedTotals[index]),
   }));
 
   if (order.deliveryPrice <= 0) {

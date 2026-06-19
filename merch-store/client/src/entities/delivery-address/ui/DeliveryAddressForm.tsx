@@ -450,9 +450,6 @@ export function DeliveryAddressForm({
                             cityCode={values.cdekCityCode}
                             value={values.cdekPvzCode}
                             selectedPvzAddress={values.cdekPvzAddress}
-                            onOpenMap={() => {
-                                toast.info("Выбор ПВЗ на карте подключим следующим этапом");
-                            }}
                             onSelect={(office) => {
                                 setValues((currentValues) => ({
                                     ...currentValues,

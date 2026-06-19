@@ -5,6 +5,8 @@ import {
     type CdekOfficeOption,
 } from "@/entities/cdek/api/cdek.api";
 
+import { CdekPvzMapModal } from "./CdekPvzMapModal";
+
 type CdekPvzSelectProps = {
     cityCode: string;
     value: string;
@@ -26,6 +28,7 @@ export function CdekPvzSelect({
     const [offices, setOffices] = useState<CdekOfficeOption[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isMapOpen, setIsMapOpen] = useState(false);
 
     const filteredOffices = offices.filter((office) => {
         const search = query.trim().toLowerCase();
@@ -158,7 +161,10 @@ export function CdekPvzSelect({
 
             <button
                 type="button"
-                onClick={onOpenMap}
+                onClick={() => {
+                    onOpenMap?.();
+                    setIsMapOpen(true);
+                }}
                 disabled={!cityCode}
                 className="rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -173,6 +179,17 @@ export function CdekPvzSelect({
                     <span className="mt-1 block">{selectedPvzAddress}</span>
                 </div>
             )}
+
+            <CdekPvzMapModal
+                open={isMapOpen}
+                offices={offices}
+                selectedCode={value}
+                onClose={() => setIsMapOpen(false)}
+                onSelect={(office) => {
+                    setQuery(office.address || office.fullAddress);
+                    onSelect(office);
+                }}
+            />
         </div>
     );
 }

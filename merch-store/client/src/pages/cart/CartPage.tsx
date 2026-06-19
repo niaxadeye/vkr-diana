@@ -28,6 +28,7 @@ export function CartPage() {
   const incrementItem = useCartStore((state) => state.incrementItem);
   const decrementItem = useCartStore((state) => state.decrementItem);
   const removeItem = useCartStore((state) => state.removeItem);
+  const clearCart = useCartStore((state) => state.clearCart);
 
   const user = useAuthStore((state) => state.user);
 
@@ -225,7 +226,11 @@ export function CartPage() {
         promoCode: appliedPromo?.code ?? null,
       });
 
-      window.location.href = payment.paymentUrl;
+      // Ссылка на оплату сформировалась — очищаем корзину перед редиректом.
+      if (payment.paymentUrl) {
+        clearCart();
+        window.location.href = payment.paymentUrl;
+      }
     } catch (err) {
       console.error("CREATE_ORDER_ERROR", err);
       setOrderError("Не удалось оформить заказ. Проверьте данные и наличие товаров.");

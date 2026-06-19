@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { CdekOfficeOption } from "@/entities/cdek/api/cdek.api";
+import { loadYandexMaps, type YmapsMap } from "@/shared/lib/yandexMaps";
 
 type CdekPvzMapModalProps = {
   open: boolean;
@@ -13,59 +11,12 @@ type CdekPvzMapModalProps = {
   onSelect: (office: CdekOfficeOption) => void;
 };
 
-// Пин ПВЗ. Используем divIcon, т.к. дефолтные png-иконки Leaflet ломаются в сборке.
-function createPin(active: boolean) {
-  const color = active ? "#060606" : "#C8102E";
-
-  return L.divIcon({
-    className: "",
-    html: `
-      <div style="
-        width: 28px; height: 36px;
-        transform: translate(-50%, -100%);
-        filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
-      ">
-        <svg viewBox="0 0 28 36" width="28" height="36" xmlns="http://www.w3.org/2000/svg">
-          <path d="M14 0C6.27 0 0 6.27 0 14c0 9.5 14 22 14 22s14-12.5 14-22C28 6.27 21.73 0 14 0z" fill="${color}"/>
-          <circle cx="14" cy="14" r="5" fill="#ffffff"/>
-        </svg>
-      </div>
-    `,
-    iconSize: [28, 36],
-    iconAnchor: [14, 36],
-  });
-}
-
 function getOfficesWithCoords(offices: CdekOfficeOption[]) {
   return offices.filter(
     (office) =>
       typeof office.latitude === "number" &&
       typeof office.longitude === "number",
   );
-}
-
-// Подгоняет видимую область под все пины при смене списка ПВЗ.
-function FitBounds({ offices }: { offices: CdekOfficeOption[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    const points = getOfficesWithCoords(offices).map(
-      (office) => [office.latitude as number, office.longitude as number] as [number, number],
-    );
-
-    if (points.length === 0) {
-      return;
-    }
-
-    if (points.length === 1) {
-      map.setView(points[0], 14);
-      return;
-    }
-
-    map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });
-  }, [offices, map]);
-
-  return null;
 }
 
 export function CdekPvzMapModal({
@@ -75,13 +26,17 @@ export function CdekPvzMapModal({
   onClose,
   onSelect,
 }: CdekPvzMapModalProps) {
-  const [activeCode, setActiveCode] = useState<string | undefined>(selectedCode);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<YmapsMap | null>(null);
 
-  useEffect(() => {
-    if (open) {
-      setActiveCode(selectedCode);
-    }
-  }, [open, selectedCode]);
+  // Актуальный onSelect без пересоздания карты.
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+
+  const [activeCode, setActiveCode] = useState<string | undefined>(selectedCode);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
 
   const officesWithCoords = useMemo(
     () => getOfficesWithCoords(offices),
@@ -92,16 +47,98 @@ export function CdekPvzMapModal({
     (office) => office.code === activeCode,
   );
 
-  const defaultCenter = useMemo<[number, number]>(() => {
-    const first = officesWithCoords[0];
+  useEffect(() => {
+    if (open) {
+      setActiveCode(selectedCode);
+    }
+  }, [open, selectedCode]);
 
-    if (first) {
-      return [first.latitude as number, first.longitude as number];
+  // Инициализация карты и расстановка меток.
+  useEffect(() => {
+    if (!open || officesWithCoords.length === 0) {
+      return;
     }
 
-    // Москва как запасной центр.
-    return [55.751244, 37.618423];
-  }, [officesWithCoords]);
+    let cancelled = false;
+
+    setStatus("loading");
+
+    loadYandexMaps()
+      .then((ymaps) => {
+        if (cancelled || !containerRef.current) {
+          return;
+        }
+
+        // Пересоздаём карту заново при каждом открытии.
+        if (mapRef.current) {
+          mapRef.current.destroy();
+          mapRef.current = null;
+        }
+
+        const first = officesWithCoords[0];
+        const map = new ymaps.Map(
+          containerRef.current,
+          {
+            center: [first.latitude as number, first.longitude as number],
+            zoom: 12,
+            controls: ["zoomControl", "geolocationControl"],
+          },
+          { suppressMapOpenBlock: true },
+        );
+
+        mapRef.current = map;
+
+        for (const office of officesWithCoords) {
+          const isActive = office.code === activeCode;
+
+          const placemark = new ymaps.Placemark(
+            [office.latitude as number, office.longitude as number],
+            {
+              balloonContentHeader: office.name,
+              balloonContentBody: office.fullAddress || office.address,
+              balloonContentFooter: office.workTime ?? "",
+              hintContent: office.name,
+            },
+            {
+              preset: isActive
+                ? "islands#blackDotIcon"
+                : "islands#redDotIcon",
+            },
+          );
+
+          placemark.events.add("click", () => {
+            setActiveCode(office.code);
+          });
+
+          map.geoObjects.add(placemark);
+        }
+
+        // Подгоняем область под все метки.
+        const bounds = map.geoObjects.getBounds();
+        if (bounds) {
+          map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 40 });
+        }
+
+        setStatus("ready");
+      })
+      .catch((error) => {
+        console.error("YANDEX_MAPS_INIT_ERROR:", error);
+        if (!cancelled) {
+          setStatus("error");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      if (mapRef.current) {
+        mapRef.current.destroy();
+        mapRef.current = null;
+      }
+    };
+    // activeCode намеренно не в зависимостях: подсветку выбранной метки
+    // не перерисовываем целиком, чтобы не пересоздавать карту на каждый клик.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, officesWithCoords]);
 
   if (!open) {
     return null;
@@ -109,10 +146,12 @@ export function CdekPvzMapModal({
 
   function handleConfirm() {
     if (activeOffice) {
-      onSelect(activeOffice);
+      onSelectRef.current(activeOffice);
       onClose();
     }
   }
+
+  const hasOffices = officesWithCoords.length > 0;
 
   return (
     <div className="fixed inset-0 z-[130]">
@@ -135,65 +174,26 @@ export function CdekPvzMapModal({
         </div>
 
         <div className="relative flex-1">
-          {officesWithCoords.length === 0 ? (
+          {!hasOffices ? (
             <div className="flex h-full items-center justify-center px-6 text-center text-[15px] text-[#666666]">
               Для этого города нет пунктов выдачи с координатами на карте.
             </div>
           ) : (
-            <MapContainer
-              center={defaultCenter}
-              zoom={12}
-              scrollWheelZoom
-              className="h-full w-full"
-              style={{ height: "100%", width: "100%" }}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
+            <>
+              <div ref={containerRef} className="h-full w-full" />
 
-              <FitBounds offices={officesWithCoords} />
+              {status === "loading" && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-[15px] text-[#666666]">
+                  Загружаем карту...
+                </div>
+              )}
 
-              {officesWithCoords.map((office) => (
-                <Marker
-                  key={office.code}
-                  position={[
-                    office.latitude as number,
-                    office.longitude as number,
-                  ]}
-                  icon={createPin(office.code === activeCode)}
-                  eventHandlers={{
-                    click: () => setActiveCode(office.code),
-                  }}
-                >
-                  <Popup>
-                    <div className="min-w-[180px]">
-                      <p className="text-[14px] font-semibold text-[#060606]">
-                        {office.name}
-                      </p>
-                      <p className="mt-1 text-[13px] text-[#666666]">
-                        {office.fullAddress || office.address}
-                      </p>
-                      {office.workTime && (
-                        <p className="mt-1 text-[12px] text-[#999999]">
-                          {office.workTime}
-                        </p>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onSelect(office);
-                          onClose();
-                        }}
-                        className="mt-2 inline-flex h-9 items-center justify-center rounded-full bg-[#060606] px-4 text-[13px] font-medium text-white transition hover:bg-neutral-800"
-                      >
-                        Выбрать этот ПВЗ
-                      </button>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+              {status === "error" && (
+                <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-[15px] text-[#666666]">
+                  Не удалось загрузить карту. Выберите пункт выдачи из списка.
+                </div>
+              )}
+            </>
           )}
         </div>
 

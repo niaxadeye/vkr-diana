@@ -7,6 +7,7 @@ import {
     sendOrderDeliveredEmail,
     sendTrackingUpdatedEmail,
 } from "./order-email.service";
+import { evaluatePromoCode } from "../promo-codes/promo-code.service";
 
 type CreateOrderParams = { userId: string; data: CreateOrderInput; };
 
@@ -61,6 +62,29 @@ async function releaseReservedStock(
             throw new Error("RESERVED_STOCK_RELEASE_FAILED");
         }
     }
+}
+
+/**
+ * Возврат использования промокода при отмене заказа.
+ * Декрементит usageCount, не опускаясь ниже нуля.
+ */
+async function releasePromoUsage(
+    tx: Prisma.TransactionClient,
+    promoCodeId: string | null,
+) {
+    if (!promoCodeId) {
+        return;
+    }
+
+    await tx.promoCode.updateMany({
+        where: {
+            id: promoCodeId,
+            usageCount: { gt: 0 },
+        },
+        data: {
+            usageCount: { decrement: 1 },
+        },
+    });
 }
 
 export const orderService = {
@@ -147,7 +171,26 @@ export const orderService = {
                 0,
             );
 
-            const discountTotal = 0;
+            // Промокод: валидируем в транзакции и считаем скидку от суммы товаров.
+            let discountTotal = 0;
+            let appliedPromoId: string | null = null;
+            const promoCodeRaw = normalizeNullableString(data.promoCode);
+
+            if (promoCodeRaw) {
+                const promo = await tx.promoCode.findUnique({
+                    where: { code: promoCodeRaw.toUpperCase() },
+                });
+
+                const result = evaluatePromoCode(promo, subtotal);
+
+                if (!result.ok) {
+                    throw new Error("ORDER_PROMO_INVALID");
+                }
+
+                discountTotal = result.discountAmount;
+                appliedPromoId = result.promoCode.id;
+            }
+
             const deliveryPrice = data.delivery.price;
             const total = subtotal + deliveryPrice - discountTotal;
 
@@ -187,7 +230,8 @@ export const orderService = {
                     ),
                     cdekPvzCode: normalizeNullableString(data.delivery.cdekPvzCode),
 
-                    promoCode: normalizeNullableString(data.promoCode),
+                    promoCode: appliedPromoId ? promoCodeRaw!.toUpperCase() : null,
+                    promoCodeId: appliedPromoId,
 
                     subtotal,
                     discountTotal,
@@ -212,6 +256,14 @@ export const orderService = {
                             increment: item.quantity,
                         },
                     },
+                });
+            }
+
+            // Инкремент счётчика использований промокода (в той же транзакции).
+            if (appliedPromoId) {
+                await tx.promoCode.update({
+                    where: { id: appliedPromoId },
+                    data: { usageCount: { increment: 1 } },
                 });
             }
 
@@ -391,6 +443,7 @@ export const orderService = {
 
                 if (shouldReleaseReserve(oldStatus, newStatus)) {
                     await releaseReservedStock(tx, order.items);
+                    await releasePromoUsage(tx, order.promoCodeId);
                 }
 
                 if (shouldShipReservedItems(oldStatus, newStatus)) {
@@ -533,6 +586,7 @@ export const orderService = {
             // если он ещё в зарезервированном состоянии.
             if (isReservedOrderStatus(existing.status)) {
                 await releaseReservedStock(tx, existing.items);
+                await releasePromoUsage(tx, existing.promoCodeId);
 
                 const updated = await tx.order.update({
                     where: { id },

@@ -10,6 +10,7 @@ const adminNav = [
   { label: "Остатки", href: "/admin/inventory" },
   { label: "Заказы", href: "/admin/orders" },
   { label: "Коллекции", href: "/admin/collections" },
+  { label: "Промокоды", href: "/admin/promo-codes" },
   { label: "Шапка", href: "/admin/home" },
   { label: "Информация", href: "/admin/info" },
   { label: "Рекомендации", href: "/admin/recommended-products" },

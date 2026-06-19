@@ -247,6 +247,8 @@ model Order {
   cdekOrderUuid      String?
   cdekTrackNumber    String?
   promoCode          String?
+  promoCodeId        String?
+  promoCodeRef       PromoCode?       @relation(fields: [promoCodeId], references: [id])
   subtotal           Int
   discountTotal      Int              @default(0)
   total              Int
@@ -282,6 +284,25 @@ model Order {
   @@index([createdAt])
   @@index([customerEmail])
   @@index([trackingNumber])
+  @@index([promoCodeId])
+}
+
+model PromoCode {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  discountPercent Int
+  minOrderAmount  Int       @default(0)
+  usageLimit      Int?
+  usageCount      Int       @default(0)
+  startsAt        DateTime?
+  endsAt          DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  orders          Order[]
+
+  @@index([isActive])
+  @@index([endsAt])
 }
 
 model OrderItem {

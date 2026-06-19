@@ -59,6 +59,13 @@ function mapCreateOrderError(error: unknown) {
                 message: "Недостаточно товара на складе",
             };
 
+        case "ORDER_PROMO_INVALID":
+            return {
+                status: 400,
+                code: "ORDER_PROMO_INVALID",
+                message: "Промокод недействителен",
+            };
+
         default:
             return null;
     }

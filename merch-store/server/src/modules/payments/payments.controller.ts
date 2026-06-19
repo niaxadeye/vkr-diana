@@ -104,6 +104,7 @@ export const paymentsController = {
           case "ORDER_PRODUCT_NOT_ACTIVE":
           case "ORDER_VARIANT_NOT_ACTIVE":
           case "ORDER_NOT_ENOUGH_STOCK":
+          case "ORDER_PROMO_INVALID":
             return fail(
               res,
               400,

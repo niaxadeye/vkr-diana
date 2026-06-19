@@ -19,6 +19,7 @@ import { informationRouter } from "./modules/information/information.routes";
 import { homeRouter } from "./modules/home/home.routes";
 import { recommendedProductsRouter } from "./modules/recommended-products/recommended-products.routes";
 import { paymentsRouter } from "./modules/payments/payments.routes";
+import { promoCodeRouter } from "./modules/promo-codes/promo-code.routes";
 
 export const app = express();
 ensureUploadFolders();
@@ -67,3 +68,4 @@ app.use("/api", informationRouter);
 app.use("/api", homeRouter);
 app.use("/api", recommendedProductsRouter);
 app.use("/api/payments", paymentsRouter);
+app.use("/api", promoCodeRouter);

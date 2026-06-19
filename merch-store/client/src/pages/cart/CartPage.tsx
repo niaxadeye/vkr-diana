@@ -18,6 +18,7 @@ import { DeliveryAddressForm } from "@/entities/delivery-address/ui/DeliveryAddr
 import { formatDeliveryAddress } from "@/entities/delivery-address/lib/formatDeliveryAddress";
 
 import { createYandexPayment } from "@/entities/payment/api/yandexPayment.api";
+import { validatePromoCode } from "@/entities/promo-code/api/promo-code.api";
 import { useAuthStore } from "@/features/auth/model/auth.store";
 import { Icon } from "@/shared/ui/icon/Icon";
 import { apiClient } from "@/shared/api/apiClient";
@@ -37,6 +38,14 @@ export function CartPage() {
   const [addressFormOpen, setAddressFormOpen] = useState(false);
 
   const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string;
+    discountPercent: number;
+    discountAmount: number;
+  } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
 
@@ -53,7 +62,13 @@ export function CartPage() {
   const selectedAddress =
     addresses.find((a) => a.id === selectedAddressId) ?? null;
 
-  const total = subtotal + (cdekPrice ?? 0);
+  // Скидка действительна, пока её сумма не превышает текущий subtotal
+  // (корзина могла измениться после применения промокода).
+  const discount = appliedPromo
+    ? Math.min(appliedPromo.discountAmount, subtotal)
+    : 0;
+
+  const total = subtotal - discount + (cdekPrice ?? 0);
 
   // --- Загрузка адресов ---
   async function loadAddresses() {
@@ -82,6 +97,38 @@ export function CartPage() {
     setAddressFormOpen(false);
     setAddressDropdownOpen(false);
     await loadAddresses();
+  }
+
+  // --- Промокод ---
+  async function handleApplyPromo() {
+    const code = promoCode.trim();
+
+    if (!code) {
+      setPromoError("Введите промокод");
+      return;
+    }
+
+    try {
+      setPromoLoading(true);
+      setPromoError(null);
+
+      const result = await validatePromoCode(code, subtotal);
+
+      setAppliedPromo(result);
+    } catch (err: any) {
+      setAppliedPromo(null);
+      setPromoError(
+        err?.response?.data?.error?.message ?? "Не удалось применить промокод",
+      );
+    } finally {
+      setPromoLoading(false);
+    }
+  }
+
+  function handleResetPromo() {
+    setAppliedPromo(null);
+    setPromoCode("");
+    setPromoError(null);
   }
 
   // --- Расчет доставки через CDEK API ---
@@ -174,7 +221,7 @@ export function CartPage() {
           variantId: item.variantId as string,
           quantity: item.quantity,
         })),
-        promoCode: promoCode.trim() || null,
+        promoCode: appliedPromo?.code ?? null,
       });
 
       window.location.href = payment.paymentUrl;
@@ -364,13 +411,19 @@ export function CartPage() {
                 label="Сумма"
                 value={formatPrice(subtotal)}
               />
+              {discount > 0 && (
+                <SummaryRow
+                  label={`Скидка${appliedPromo ? ` (${appliedPromo.code})` : ""}`}
+                  value={`−${formatPrice(discount)}`}
+                />
+              )}
               <SummaryRow
                 label="Доставка"
                 value={cdekLoading ? "Считаем..." : formatPrice(cdekDelivery?.data.total_sum ?? 0)}
               />
               <SummaryRow
                 label="Итого"
-                value={formatPrice(subtotal + (cdekPrice ?? 0))}
+                value={formatPrice(total)}
                 strong
               />
             </section>
@@ -458,20 +511,49 @@ export function CartPage() {
 
               <div className="mt-6">
                 <label className="text-[15px] font-[400] text-black">Промокод</label>
-                <div className="mt-3 flex h-[48px] rounded-[16px] border border-neutral-300 p-1">
-                  <input
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Введите промокод"
-                    className="min-w-0 flex-1 bg-transparent px-3 text-[14px] font-[400] outline-none placeholder:text-neutral-400"
-                  />
-                  <button
-                    type="button"
-                    className="rounded-[12px] bg-neutral-100 px-5 text-[15px] font-[500] text-black transition hover:bg-neutral-200"
-                  >
-                    Применить
-                  </button>
-                </div>
+
+                {appliedPromo ? (
+                  <div className="mt-3 flex items-center justify-between gap-3 rounded-[16px] border border-green-200 bg-green-50 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-[15px] font-[500] text-black">
+                        {appliedPromo.code} · −{appliedPromo.discountPercent}%
+                      </p>
+                      <p className="mt-0.5 text-[13px] text-neutral-500">
+                        Скидка {formatPrice(discount)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleResetPromo}
+                      className="shrink-0 rounded-[12px] bg-white px-4 py-2 text-[14px] font-[500] text-black ring-1 ring-neutral-200 transition hover:bg-neutral-100"
+                    >
+                      Отменить
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-3 flex h-[48px] rounded-[16px] border border-neutral-300 p-1">
+                    <input
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      placeholder="Введите промокод"
+                      className="min-w-0 flex-1 bg-transparent px-3 text-[14px] font-[400] outline-none placeholder:text-neutral-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void handleApplyPromo()}
+                      disabled={promoLoading}
+                      className="rounded-[12px] bg-neutral-100 px-5 text-[15px] font-[500] text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {promoLoading ? "Проверяем..." : "Применить"}
+                    </button>
+                  </div>
+                )}
+
+                {promoError && (
+                  <p className="mt-2 text-[13px] font-medium text-red-500">
+                    {promoError}
+                  </p>
+                )}
               </div>
 
               {orderError && (

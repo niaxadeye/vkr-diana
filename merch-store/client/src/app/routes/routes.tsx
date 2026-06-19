@@ -33,6 +33,8 @@ import { InformationPage } from "@/pages/information/InformationPage";
 import { AdminHomePage } from "@/pages/admin/home/AdminHomePage";
 import { InformationAdminPage } from "@/pages/admin/information/InformationAdminPage";
 import { AdminRecommendedProductsPage } from "@/pages/admin/recommended-product/AdminRecommendedProductsPage";
+import { AdminPromoCodesPage } from "@/pages/admin/promo-codes/AdminPromoCodesPage";
+import { PromoCodeFormPage } from "@/pages/admin/promo-code-form/PromoCodeFormPage";
 import { PaymentSuccessPage } from "@/pages/payment/PaymentSuccessPage";
 import { PaymentErrorPage } from "@/pages/payment/PaymentErrorPage";
 import { PaymentAbortPage } from "@/pages/payment/PaymentAbortPage";
@@ -127,6 +129,18 @@ export const router = createBrowserRouter([
       {
         path: "collections/:id/edit",
         Component: CollectionFormPage,
+      },
+      {
+        path: "promo-codes",
+        Component: AdminPromoCodesPage,
+      },
+      {
+        path: "promo-codes/create",
+        Component: PromoCodeFormPage,
+      },
+      {
+        path: "promo-codes/:id/edit",
+        Component: PromoCodeFormPage,
       },
       {
         path: "orders",

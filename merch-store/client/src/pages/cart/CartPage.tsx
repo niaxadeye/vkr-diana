@@ -21,6 +21,7 @@ import { formatDeliveryAddress } from "@/entities/delivery-address/lib/formatDel
 import { createYandexPayment } from "@/entities/payment/api/yandexPayment.api";
 import { validatePromoCode } from "@/entities/promo-code/api/promo-code.api";
 import { useAuthStore } from "@/features/auth/model/auth.store";
+import { useClickOutside } from "@/shared/lib/useClickOutside";
 import { Icon } from "@/shared/ui/icon/Icon";
 import { apiClient } from "@/shared/api/apiClient";
 
@@ -37,6 +38,10 @@ export function CartPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [addressDropdownOpen, setAddressDropdownOpen] = useState(false);
+  const addressDropdownRef = useClickOutside<HTMLDivElement>(
+    addressDropdownOpen,
+    () => setAddressDropdownOpen(false),
+  );
   const [addressFormOpen, setAddressFormOpen] = useState(false);
 
   const [promoCode, setPromoCode] = useState("");
@@ -452,7 +457,7 @@ export function CartPage() {
                   Загружаем адреса...
                 </div>
               ) : addresses.length > 0 ? (
-                <div className="relative mt-3">
+                <div className="relative mt-3" ref={addressDropdownRef}>
                   <button
                     type="button"
                     onClick={() => setAddressDropdownOpen((v) => !v)}
@@ -483,6 +488,7 @@ export function CartPage() {
                           type="button"
                           onClick={() => {
                             setSelectedAddressId(address.id);
+                            setAddressDropdownOpen(false);
                           }}
                           className="block w-full border-b border-neutral-100 px-4 py-3 text-left last:border-b-0 hover:bg-neutral-50"
                         >

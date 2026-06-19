@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Eye, EyeOff, X } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import axios from "axios";
 
 import { changePasswordRequest } from "@/features/auth/api/auth.api";
+import { ResponsiveModal } from "@/shared/ui/modal/ResponsiveModal";
 
 type Props = {
   open: boolean;
@@ -19,8 +21,6 @@ export function ChangePasswordModal({ open, onClose }: Props) {
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-
-  if (!open) return null;
 
   function resetForm() {
     setCurrentPassword("");
@@ -77,59 +77,49 @@ export function ChangePasswordModal({ open, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-[100]">
-      <div className="absolute inset-0 bg-black/45" onClick={handleClose} />
+    <ResponsiveModal
+      open={open}
+      onClose={handleClose}
+      title="Изменить пароль"
+      busy={loading}
+    >
+      <form onSubmit={handleSubmit}>
+        <PasswordField
+          label="Текущий пароль"
+          value={currentPassword}
+          onChange={setCurrentPassword}
+          visible={showCurrent}
+          onToggle={() => setShowCurrent((v) => !v)}
+        />
 
-      <div className="absolute left-1/2 top-1/2 w-[calc(100%-24px)] max-w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-7 shadow-2xl md:p-9">
-        <div className="flex items-start justify-between gap-5">
-          <h2 className="text-[36px] font-bold tracking-[-0.05em]">
-            Изменить пароль
-          </h2>
+        <PasswordField
+          label="Новый пароль"
+          value={newPassword}
+          onChange={setNewPassword}
+          visible={showNew}
+          onToggle={() => setShowNew((v) => !v)}
+          className="mt-5"
+        />
 
-          <button
-            type="button"
-            onClick={handleClose}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200"
-          >
-            <X size={22} />
-          </button>
-        </div>
+        <PasswordField
+          label="Подтвердите пароль"
+          value={passwordConfirm}
+          onChange={setPasswordConfirm}
+          visible={showConfirm}
+          onToggle={() => setShowConfirm((v) => !v)}
+          className="mt-5"
+        />
 
-        <form className="mt-7 space-y-7" onSubmit={handleSubmit}>
-          <PasswordField
-            label="Текущий пароль"
-            value={currentPassword}
-            onChange={setCurrentPassword}
-            visible={showCurrent}
-            onToggle={() => setShowCurrent((v) => !v)}
-          />
-
-          <PasswordField
-            label="Новый пароль"
-            value={newPassword}
-            onChange={setNewPassword}
-            visible={showNew}
-            onToggle={() => setShowNew((v) => !v)}
-          />
-
-          <PasswordField
-            label="Подтвердите пароль"
-            value={passwordConfirm}
-            onChange={setPasswordConfirm}
-            visible={showConfirm}
-            onToggle={() => setShowConfirm((v) => !v)}
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="h-14 w-full rounded-full bg-black text-base font-bold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? "Сохраняем..." : "Сохранить изменения"}
-          </button>
-        </form>
-      </div>
-    </div>
+        <motion.button
+          type="submit"
+          disabled={loading}
+          whileTap={{ scale: 0.99 }}
+          className="mt-6 h-12 w-full rounded-full bg-black text-[15px] font-bold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? "Сохраняем..." : "Сохранить изменения"}
+        </motion.button>
+      </form>
+    </ResponsiveModal>
   );
 }
 
@@ -139,33 +129,38 @@ function PasswordField({
   onChange,
   visible,
   onToggle,
+  className,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   visible: boolean;
   onToggle: () => void;
+  className?: string;
 }) {
   return (
-    <label className="block">
-      <span className="mb-3 block text-lg font-medium">{label}</span>
+    <div className={className}>
+      <label className="mb-2 block text-[16px] font-[400] leading-5 text-[#060606]">
+        {label}
+      </label>
 
       <div className="relative">
         <input
           type={visible ? "text" : "password"}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-16 w-full rounded-2xl border border-neutral-300 px-6 pr-14 text-lg outline-none focus:border-black"
+          className="h-11 w-full rounded-2xl border border-neutral-300 px-4 pr-12 text-[14px] font-[400] outline-none transition focus:border-2 focus:border-black"
         />
 
         <button
           type="button"
           onClick={onToggle}
-          className="absolute right-5 top-1/2 -translate-y-1/2 text-neutral-500"
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500"
+          aria-label={visible ? "Скрыть пароль" : "Показать пароль"}
         >
-          {visible ? <EyeOff size={24} /> : <Eye size={24} />}
+          {visible ? <EyeOff size={20} /> : <Eye size={20} />}
         </button>
       </div>
-    </label>
+    </div>
   );
 }

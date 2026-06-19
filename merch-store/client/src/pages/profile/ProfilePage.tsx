@@ -186,6 +186,15 @@ export function ProfilePage() {
                                 Профиль
                             </h1>
 
+                            {(user?.role === "ADMIN" || user?.role === "MANAGER") && (
+                                <Link
+                                    to="/admin"
+                                    className="inline-flex h-10 items-center justify-center rounded-full bg-[#060606] px-5 text-[15px] font-[500] text-white transition hover:bg-neutral-800"
+                                >
+                                    Админ-панель
+                                </Link>
+                            )}
+
                             <button
                                 type="button"
                                 onClick={handleLogout}

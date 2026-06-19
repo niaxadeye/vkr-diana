@@ -8,14 +8,13 @@ import type { PromoCode } from "@/entities/promo-code/model/promo-code.types";
 import { Button } from "@/shared/ui/button/Button";
 import { ButtonLink } from "@/shared/ui/button/ButtonLink";
 import { formatPrice } from "@/entities/cart/lib/formatPrice";
-import { useToastStore } from "@/shared/ui/toast/toast.store";
+import { showToast } from "@/shared/ui/toast/notify";
 
 export function AdminPromoCodesPage() {
     const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState("");
 
-    const showToast = useToastStore((state) => state.showToast);
 
     const filtered = useMemo(() => {
         const normalized = search.trim().toLowerCase();

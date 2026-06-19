@@ -9,7 +9,7 @@ import {
 } from "@/entities/promo-code/api/adminPromoCode.api";
 import type { PromoCodePayload } from "@/entities/promo-code/model/promo-code.types";
 import { Button } from "@/shared/ui/button/Button";
-import { useToastStore } from "@/shared/ui/toast/toast.store";
+import { showToast } from "@/shared/ui/toast/notify";
 
 type FormState = {
     code: string;
@@ -75,7 +75,6 @@ export function PromoCodeFormPage() {
     const isEdit = Boolean(id);
 
     const navigate = useNavigate();
-    const showToast = useToastStore((state) => state.showToast);
 
     const [form, setForm] = useState<FormState>(emptyForm);
     const [isLoading, setIsLoading] = useState(false);

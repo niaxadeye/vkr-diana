@@ -18,7 +18,7 @@ import { Button } from "@/shared/ui/button/Button";
 import { CustomSelect } from "@/shared/ui/select/CustomSelect";
 import { UploadImageButton } from "@/shared/ui/upload-image-button/UploadImageButton";
 import { getMediaUrl } from "@/shared/lib/getMediaUrl";
-import { useToastStore } from "@/shared/ui/toast/toast.store";
+import { showToast } from "@/shared/ui/toast/notify";
 
 const PRODUCT_STATUS_OPTIONS: { value: ProductStatus; label: string; description: string }[] = [
     { value: "DRAFT", label: "Черновик", description: "Товар скрыт от покупателей" },
@@ -100,7 +100,6 @@ export function ProductFormPage() {
     const { id } = useParams();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
-    const showToast = useToastStore((state) => state.showToast);
 
     const [collections, setCollections] = useState<AdminCollection[]>([]);
     const [form, setForm] = useState<ProductPayload & {

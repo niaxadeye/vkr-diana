@@ -12,7 +12,7 @@ import { uploadCollectionImage } from "@/shared/api/upload.api";
 import { Button } from "@/shared/ui/button/Button";
 import { UploadImageButton } from "@/shared/ui/upload-image-button/UploadImageButton";
 import { getMediaUrl } from "@/shared/lib/getMediaUrl";
-import { useToastStore } from "@/shared/ui/toast/toast.store";
+import { showToast } from "@/shared/ui/toast/notify";
 
 const emptyCollection: CollectionPayload = {
     title: "",
@@ -34,7 +34,6 @@ export function CollectionFormPage() {
     const isEdit = Boolean(id);
 
     const navigate = useNavigate();
-    const showToast = useToastStore((state) => state.showToast);
 
     const [form, setForm] = useState<CollectionPayload>(emptyCollection);
     const [isLoading, setIsLoading] = useState(false);

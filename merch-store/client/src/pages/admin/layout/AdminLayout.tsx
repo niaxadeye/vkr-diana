@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Link, Outlet } from "react-router";
 
 import { cn } from "@/shared/lib/cn";
 import { Icon } from "@/shared/ui/icon/Icon";
@@ -24,41 +24,28 @@ export function AdminLayout() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50">
+    <main className="min-h-screen bg-white">
       <div className="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
-        <aside className="hidden border-r border-neutral-200 bg-white p-6 lg:block">
+        <aside className="hidden border-r border-[#e5e5e5] bg-white p-6 lg:block">
           <AdminSidebar />
         </aside>
 
         <div className="lg:hidden">
-          <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white/90 px-4 py-3 backdrop-blur">
+          <header className="sticky top-0 z-50 border-b border-[#e5e5e5] bg-white/90 px-4 py-3 backdrop-blur">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[20px] font-semibold tracking-[-0.04em] text-black">
-                  Admin
-                </p>
-
-                <p className="text-xs text-neutral-500">
-                  Панель управления
+                <p className="text-[22px] font-[500] tracking-[-0.04em] text-[#060606]">
+                  Админ-панель
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  setMenuOpen((current) => !current)
-                }
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-neutral-100 text-black transition hover:bg-black hover:text-white"
-                aria-label={
-                  menuOpen
-                    ? "Закрыть меню"
-                    : "Открыть меню"
-                }
+                onClick={() => setMenuOpen((current) => !current)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f0f0f0] text-[#060606] transition hover:bg-[#060606] hover:text-white"
+                aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"}
               >
-                <Icon
-                  name={menuOpen ? "close" : "menu"}
-                  className="h-5 w-5"
-                />
+                <Icon name={menuOpen ? "close" : "menu"} className="h-5 w-5" />
               </button>
             </div>
 
@@ -71,6 +58,14 @@ export function AdminLayout() {
                     onClick={closeMenu}
                   />
                 ))}
+
+                <Link
+                  to="/"
+                  onClick={closeMenu}
+                  className="mt-1 flex min-h-12 items-center rounded-2xl px-4 py-3 text-[15px] font-[500] text-[#666666] transition hover:bg-[#f0f0f0] hover:text-[#060606]"
+                >
+                  На сайт
+                </Link>
               </nav>
             )}
           </header>
@@ -86,14 +81,14 @@ export function AdminLayout() {
 
 function AdminSidebar() {
   return (
-    <div className="sticky top-6">
+    <div className="sticky top-6 flex h-[calc(100vh-3rem)] flex-col">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-[-0.05em] text-black">
-          Admin
+        <h1 className="text-[28px] font-[500] leading-[34px] tracking-[-0.04em] text-[#060606]">
+          Админ-панель
         </h1>
 
-        <p className="mt-1 text-sm text-neutral-500">
-          Панель управления
+        <p className="mt-1 text-[15px] text-[#666666]">
+          Управление магазином
         </p>
       </div>
 
@@ -102,6 +97,14 @@ function AdminSidebar() {
           <AdminNavLink key={item.href} item={item} />
         ))}
       </nav>
+
+      <Link
+        to="/"
+        className="mt-auto flex min-h-12 items-center gap-2 rounded-2xl px-4 py-3 text-[15px] font-[500] text-[#666666] transition hover:bg-[#f0f0f0] hover:text-[#060606]"
+      >
+        <Icon name="arrow-left" className="h-4 w-4" />
+        На сайт
+      </Link>
     </div>
   );
 }
@@ -123,10 +126,10 @@ function AdminNavLink({
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          "flex min-h-12 items-center rounded-2xl px-4 py-3 text-[15px] font-medium transition",
+          "flex min-h-12 items-center rounded-2xl px-4 py-3 text-[15px] font-[500] transition",
           isActive
-            ? "bg-black text-white"
-            : "text-black hover:bg-neutral-100",
+            ? "bg-[#060606] text-white"
+            : "text-[#060606] hover:bg-[#f0f0f0]",
         )
       }
     >

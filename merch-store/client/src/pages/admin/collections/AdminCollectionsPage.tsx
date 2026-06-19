@@ -8,14 +8,12 @@ import {
 import { Button } from "@/shared/ui/button/Button";
 import { ButtonLink } from "@/shared/ui/button/ButtonLink";
 import { getMediaUrl } from "@/shared/lib/getMediaUrl";
-import { useToastStore } from "@/shared/ui/toast/toast.store";
+import { showToast } from "@/shared/ui/toast/notify";
 
 export function AdminCollectionsPage() {
     const [collections, setCollections] = useState<AdminCollection[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState("");
-
-    const showToast = useToastStore((state) => state.showToast);
 
     const filteredCollections = useMemo(() => {
         const normalizedSearch = search.trim().toLowerCase();

@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 
 import { RootLayout } from "@/app/layouts/RootLayout";
 import { ProtectedRoute } from "@/app/routes/ProtectedRoute";
+import { AdminRoute } from "@/app/routes/AdminRoute";
 
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
@@ -100,8 +101,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    Component: AdminLayout,
+    Component: AdminRoute,
     children: [
+      {
+        Component: AdminLayout,
+        children: [
       {
         index: true,
         Component: AdminDashboardPage,
@@ -166,6 +170,8 @@ export const router = createBrowserRouter([
         path: "recommended-products",
         Component: AdminRecommendedProductsPage,
       }
+        ],
+      },
     ],
   },
   {

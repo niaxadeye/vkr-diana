@@ -134,14 +134,14 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                           </div>
                         )}
 
-                        <div className="mt-2 flex items-center gap-1.5 text-[15px] font-[400] leading-5">
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[15px] font-[400] leading-5">
                           {discounted ? (
                             <>
-                              <span className="rounded-full bg-[#060606] px-2.5 py-1 font-[400] text-white">
+                              <span className="shrink-0 whitespace-nowrap rounded-full bg-[#060606] px-2.5 py-1 font-[400] text-white">
                                 {formatPrice(item.price)}
                               </span>
 
-                              <span className="text-[#060606] line-through decoration-[#060606] font-[400] decoration-[1px]">
+                              <span className="whitespace-nowrap text-[#060606] line-through decoration-[#060606] font-[400] decoration-[1px]">
                                 {formatPrice(item.oldPrice!)}
                               </span>
                             </>

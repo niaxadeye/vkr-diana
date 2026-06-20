@@ -9,6 +9,7 @@ import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
 import { ConfirmEmailChangePage } from "@/pages/auth/ConfirmEmailChangePage";
+import { VerifyEmailPage } from "@/pages/auth/VerifyEmailPage";
 
 import { CartPage } from "@/pages/cart/CartPage";
 import { CatalogPage } from "@/pages/catalog/CatalogPage";
@@ -60,6 +61,10 @@ export const router = createBrowserRouter([
   {
     path: "/confirm-email-change",
     Component: ConfirmEmailChangePage,
+  },
+  {
+    path: "/verify-email",
+    Component: VerifyEmailPage,
   },
   {
     path: "/",

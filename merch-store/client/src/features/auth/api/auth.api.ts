@@ -85,3 +85,21 @@ export async function confirmEmailChangeRequest(token: string) {
 
   return response.data.data;
 }
+
+export async function verifyEmailRequest(token: string) {
+  const response = await apiClient.get<{
+    success: true;
+    data: { message: string };
+  }>("/auth/verify-email", { params: { token } });
+
+  return response.data.data;
+}
+
+export async function resendVerificationRequest() {
+  const response = await apiClient.post<{
+    success: true;
+    data: { message: string };
+  }>("/auth/resend-verification");
+
+  return response.data.data;
+}

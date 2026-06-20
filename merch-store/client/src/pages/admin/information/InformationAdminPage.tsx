@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { toast } from "sonner";
 import { getAdminInformationPages, updateInformationPage } from "@/entities/information/api/information.admin.api";
 import type { InformationPage as InformationPageType } from "@/entities/information/model/information.types";
 import MdEditor from "react-markdown-editor-lite";
 import "react-markdown-editor-lite/lib/index.css";
+import { Markdown } from "@/shared/ui/markdown/Markdown";
 
 export function InformationAdminPage() {
   const [pages, setPages] = useState<InformationPageType[]>([]);
@@ -32,11 +32,27 @@ export function InformationAdminPage() {
     if (!selectedPage) return;
     setSaving(true);
     try {
-      await updateInformationPage(selectedPage.slug, selectedPage);
-      alert("Сохранено!");
+      const updated = await updateInformationPage(selectedPage.slug, {
+        title: selectedPage.title,
+        content: selectedPage.content,
+        sortOrder: selectedPage.sortOrder,
+        isActive: selectedPage.isActive,
+      });
+
+      // Обновляем локальное состояние ответом сервера, чтобы правки
+      // не «терялись» при переключении вкладок.
+      const nextPage = updated ?? selectedPage;
+      setSelectedPage(nextPage);
+      setPages((current) =>
+        current.map((page) =>
+          page.slug === nextPage.slug ? nextPage : page,
+        ),
+      );
+
+      toast.success("Страница сохранена");
     } catch (err) {
       console.error(err);
-      alert("Ошибка при сохранении");
+      toast.error("Не удалось сохранить страницу");
     } finally {
       setSaving(false);
     }
@@ -82,7 +98,7 @@ export function InformationAdminPage() {
             <MdEditor
               value={selectedPage.content}
               style={{ height: "400px" }}
-              renderHTML={(text) => <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>}
+              renderHTML={(text) => <Markdown>{text}</Markdown>}
               onChange={({ text }) => setSelectedPage({ ...selectedPage, content: text })}
             />
             <button

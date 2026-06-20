@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router";
-import ReactMarkdown from "react-markdown";
 import { Swiper, SwiperSlide, } from "swiper/react";
 import { FreeMode } from 'swiper/modules';
 import "@/info.css";
 
 import { getInformationPages } from "@/entities/information/api/information.api";
 import type { InformationPage as InformationPageType } from "@/entities/information/model/information.types";
+import { Markdown } from "@/shared/ui/markdown/Markdown";
 
 
 export function InformationPage() {
@@ -118,16 +118,8 @@ export function InformationPage() {
                     <div className="text-gray-600 text-lg">Информационная страница не найдена</div>
                 ) : (
                     <article className="max-w-[800px] w-full">
-                        <div className="mt-6 text-left ">
-                            <ReactMarkdown
-                                components={{
-                                    p: ({ children }) => (
-                                        <p className="mb-6 leading-relaxed">{children}</p>
-                                    )
-                                }}
-                            >
-                                {activePage.content}
-                            </ReactMarkdown>
+                        <div className="mt-6 text-left">
+                            <Markdown>{activePage.content}</Markdown>
                         </div>
                     </article>
                 )}

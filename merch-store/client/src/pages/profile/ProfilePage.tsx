@@ -143,13 +143,27 @@ export function ProfilePage() {
     }
 
     async function handleRetryPayment(orderId: string) {
+        if (user && !user.isEmailVerified) {
+            toast.error("Подтвердите email, чтобы оплатить заказ");
+            return;
+        }
+
         try {
             setActionLoadingId(orderId);
             const payment = await createYandexPaymentForExistingOrder(orderId);
             window.location.href = payment.paymentUrl;
         } catch (error) {
             console.error("RETRY_YANDEX_PAYMENT_ERROR:", error);
-            toast.error("Не удалось открыть оплату. Попробуйте обновить страницу.");
+
+            const code =
+                (error as { response?: { data?: { error?: { code?: string } } } })
+                    ?.response?.data?.error?.code;
+
+            if (code === "EMAIL_NOT_VERIFIED") {
+                toast.error("Подтвердите email, чтобы оплатить заказ");
+            } else {
+                toast.error("Не удалось открыть оплату. Попробуйте обновить страницу.");
+            }
         } finally {
             setActionLoadingId(null);
         }

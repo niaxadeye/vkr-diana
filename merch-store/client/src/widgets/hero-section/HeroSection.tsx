@@ -5,11 +5,21 @@ import { getMediaUrl } from "@/shared/lib/getMediaUrl";
 import { cn } from "@/shared/lib/cn";
 
 type HeroSectionProps = {
-  banner: HomeHeroBanner;
+  banner: HomeHeroBanner | null;
   isLoading?: boolean;
 };
 
 export function HeroSection({ banner, isLoading = false }: HeroSectionProps) {
+  // Пока баннер не загружен — показываем чистый скелетон без mock-контента,
+  // чтобы не мелькали плейсхолдер и заглушечный текст.
+  if (!banner) {
+    return (
+      <section className="bg-white md:relative md:min-h-[calc(100vh-80px)] md:overflow-hidden md:bg-neutral-100">
+        <div className="relative aspect-square w-full animate-pulse overflow-hidden bg-neutral-100 md:absolute md:inset-0 md:aspect-auto md:h-full" />
+      </section>
+    );
+  }
+
   const imageDesktop = getMediaUrl(banner.imageDesktop);
   const imageMobile = getMediaUrl(banner.imageMobile);
 

@@ -38,6 +38,7 @@ export const authService = {
         id: true,
         email: true,
         role: true,
+        emailVerifiedAt: true,
       },
     });
 
@@ -60,7 +61,12 @@ export const authService = {
     });
 
     return {
-      user,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isEmailVerified: Boolean(user.emailVerifiedAt),
+      },
       accessToken,
       refreshToken,
     };
@@ -90,6 +96,7 @@ export const authService = {
       id: userWithPassword.id,
       email: userWithPassword.email,
       role: userWithPassword.role,
+      isEmailVerified: Boolean(userWithPassword.emailVerifiedAt),
     };
 
     const accessToken = createAccessToken({
@@ -150,6 +157,7 @@ export const authService = {
         id: savedToken.user.id,
         email: savedToken.user.email,
         role: savedToken.user.role,
+        isEmailVerified: Boolean(savedToken.user.emailVerifiedAt),
       },
     };
   },
@@ -169,7 +177,7 @@ export const authService = {
   },
 
   async getMe(userId: string) {
-    return prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -179,7 +187,19 @@ export const authService = {
         phone: true,
         role: true,
         createdAt: true,
+        emailVerifiedAt: true,
       },
     });
+
+    if (!user) {
+      return null;
+    }
+
+    const { emailVerifiedAt, ...rest } = user;
+
+    return {
+      ...rest,
+      isEmailVerified: Boolean(emailVerifiedAt),
+    };
   },
 };

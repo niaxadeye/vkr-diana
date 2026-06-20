@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 
 import { env } from "../../config/env";
+import { prisma } from "../../prisma/prisma";
 import { fail, success } from "../../utils/api-response";
 import { orderService } from "../orders/order.service";
 import { createYandexPaymentSchema } from "./payments.schemas";
@@ -16,6 +17,15 @@ import {
 
 function getUserId(req: Request) {
   return req.user?.userId;
+}
+
+async function isEmailVerified(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { emailVerifiedAt: true },
+  });
+
+  return Boolean(user?.emailVerifiedAt);
 }
 
 async function cancelOrderAfterPaymentInitFailure(orderId: string) {
@@ -58,6 +68,15 @@ export const paymentsController = {
 
     if (!userId) {
       return fail(res, 401, "UNAUTHORIZED", "Пользователь не авторизован");
+    }
+
+    if (!(await isEmailVerified(userId))) {
+      return fail(
+        res,
+        403,
+        "EMAIL_NOT_VERIFIED",
+        "Подтвердите email, чтобы оформить заказ",
+      );
     }
 
     let order: Awaited<ReturnType<typeof orderService.createOrder>> | null = null;
@@ -124,6 +143,15 @@ export const paymentsController = {
 
     if (!userId) {
       return fail(res, 401, "UNAUTHORIZED", "Пользователь не авторизован");
+    }
+
+    if (!(await isEmailVerified(userId))) {
+      return fail(
+        res,
+        403,
+        "EMAIL_NOT_VERIFIED",
+        "Подтвердите email, чтобы оплатить заказ",
+      );
     }
 
     try {

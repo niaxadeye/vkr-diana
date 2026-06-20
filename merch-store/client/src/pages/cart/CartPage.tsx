@@ -193,6 +193,11 @@ export function CartPage() {
       return;
     }
 
+    if (user && !user.isEmailVerified) {
+      toast.error("Подтвердите email, чтобы оформить заказ");
+      return;
+    }
+
     try {
       setIsSubmittingOrder(true);
       setOrderError(null);
@@ -237,7 +242,17 @@ export function CartPage() {
       }
     } catch (err) {
       console.error("CREATE_ORDER_ERROR", err);
-      setOrderError("Не удалось оформить заказ. Проверьте данные и наличие товаров.");
+
+      const code =
+        (err as { response?: { data?: { error?: { code?: string } } } })
+          ?.response?.data?.error?.code;
+
+      if (code === "EMAIL_NOT_VERIFIED") {
+        toast.error("Подтвердите email, чтобы оформить заказ");
+        setOrderError("Подтвердите email, чтобы оформить заказ.");
+      } else {
+        setOrderError("Не удалось оформить заказ. Проверьте данные и наличие товаров.");
+      }
     } finally {
       setIsSubmittingOrder(false);
     }

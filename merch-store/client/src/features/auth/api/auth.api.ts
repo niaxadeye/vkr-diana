@@ -4,6 +4,7 @@ export type AuthUser = {
   id: string;
   email: string;
   role: "USER" | "ADMIN" | "MANAGER";
+  isEmailVerified: boolean;
 };
 
 type AuthResponse = {

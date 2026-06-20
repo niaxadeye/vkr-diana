@@ -9,7 +9,7 @@ import { RecommendedProductsSection } from "@/widgets/recommended-products-secti
 import { homeHeroBanner } from "./model/home.mock";
 
 export function HomePage() {
-  const [heroBanner, setHeroBanner] = useState<HomeHeroBanner>(homeHeroBanner);
+  const [heroBanner, setHeroBanner] = useState<HomeHeroBanner | null>(null);
   const [isHeroLoading, setIsHeroLoading] = useState(true);
 
   useEffect(() => {
@@ -21,6 +21,8 @@ export function HomePage() {
 
         if (hero.isActive) {
           setHeroBanner(hero);
+        } else {
+          setHeroBanner(homeHeroBanner);
         }
       } catch (error) {
         console.error("LOAD_HOME_HERO_ERROR:", error);

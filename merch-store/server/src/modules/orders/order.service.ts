@@ -247,16 +247,20 @@ export const orderService = {
             });
 
             for (const item of normalizedItems) {
-                await tx.productVariant.update({
-                    where: {
-                        id: item.variantId,
-                    },
-                    data: {
-                        reservedStock: {
-                            increment: item.quantity,
-                        },
-                    },
-                });
+                // Атомарно резервируем: инкремент проходит только если
+                // физического остатка реально хватает (stock - reservedStock >= qty).
+                // Это закрывает гонку «прочитал-потом-записал»: проверка и запись
+                // выполняются одним UPDATE на уровне БД, без окна между ними.
+                const reserved = await tx.$executeRaw`
+                    UPDATE \`ProductVariant\`
+                    SET \`reservedStock\` = \`reservedStock\` + ${item.quantity}
+                    WHERE \`id\` = ${item.variantId}
+                      AND \`stock\` - \`reservedStock\` >= ${item.quantity}
+                `;
+
+                if (reserved !== 1) {
+                    throw new Error("ORDER_NOT_ENOUGH_STOCK");
+                }
             }
 
             // Инкремент счётчика использований промокода (в той же транзакции).

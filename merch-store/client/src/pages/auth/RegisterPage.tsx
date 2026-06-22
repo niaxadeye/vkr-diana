@@ -175,13 +175,23 @@ export function RegisterPage() {
           className="mt-8 text-center text-[14px] text-[#666666] leading-5 text-neutral-500"
         >
           Нажимая зарегистрироваться, вы соглашаетесь с нашими{" "}
-          <Link to="/terms" className="underline">
+          <a
+            href="https://acrylogo.ru/information?tab=terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
             Положениями
-          </Link>{" "}
+          </a>{" "}
           и{" "}
-          <Link to="/privacy" className="underline">
+          <a
+            href="https://acrylogo.ru/information?tab=privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
             Политикой приватности
-          </Link>
+          </a>
           .
         </motion.p>
       </motion.form>
